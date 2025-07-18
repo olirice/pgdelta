@@ -28,9 +28,9 @@ CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER name { BEFORE | AFTER | INSTEAD OF 
 - Row-level and statement-level triggers
 
 ```sql
-CREATE TRIGGER "update_user_modified_time" 
-BEFORE UPDATE ON "public"."users" 
-FOR EACH ROW 
+CREATE TRIGGER "update_user_modified_time"
+BEFORE UPDATE ON "public"."users"
+FOR EACH ROW
 EXECUTE FUNCTION update_modified_time();
 ```
 

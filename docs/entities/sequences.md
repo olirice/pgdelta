@@ -28,7 +28,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] name
 - All sequence parameters (INCREMENT, MINVALUE, MAXVALUE, START, CACHE, CYCLE)
 
 ```sql
-CREATE SEQUENCE "public"."users_id_seq" 
+CREATE SEQUENCE "public"."users_id_seq"
 AS bigint
 INCREMENT BY 1
 MINVALUE 1
@@ -105,12 +105,12 @@ class CreateSequence:
 def generate_create_sequence_sql(change: CreateSequence) -> str:
     """Generate CREATE SEQUENCE SQL."""
     sql_parts = [change.sequence_definition]
-    
+
     # Add ownership if specified
     if change.owned_by:
         quoted_seq = f'"{change.namespace}"."{change.seqname}"'
         sql_parts.append(f"ALTER SEQUENCE {quoted_seq} OWNED BY {change.owned_by};")
-    
+
     return "\n".join(sql_parts)
 ```
 

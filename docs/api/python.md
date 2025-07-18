@@ -119,11 +119,11 @@ from pgdelta.model import PgClass, PgAttribute
 # Access individual tables
 for table in source_catalog.tables:
     print(f"Table: {table.schema}.{table.name}")
-    
+
     # Access columns
     for column in table.columns:
         print(f"  Column: {column.name} ({column.type_name})")
-        
+
         # Check column properties
         if not column.is_nullable:
             print(f"    NOT NULL")
@@ -139,13 +139,13 @@ from pgdelta import DependencyResolutionError, CyclicDependencyError
 try:
     changes = source_catalog.diff(target_catalog)
     sql_statements = [generate_sql(change) for change in changes]
-    
+
 except DependencyResolutionError as e:
     print(f"Could not resolve dependencies: {e}")
-    
+
 except CyclicDependencyError as e:
     print(f"Cyclic dependency detected: {e}")
-    
+
 except Exception as e:
     print(f"Unexpected error: {e}")
 ```
@@ -168,26 +168,26 @@ def generate_diff():
     data = request.json
     source_url = data['source_url']
     target_url = data['target_url']
-    
+
     try:
         source_engine = create_engine(source_url)
         target_engine = create_engine(target_url)
-        
+
         with Session(source_engine) as source_session, \
              Session(target_engine) as target_session:
-            
+
             source_catalog = extract_catalog(source_session)
             target_catalog = extract_catalog(target_session)
-            
+
             changes = source_catalog.diff(target_catalog)
             sql_statements = [generate_sql(change) for change in changes]
-            
+
             return jsonify({
                 'success': True,
                 'sql': sql_statements,
                 'change_count': len(changes)
             })
-            
+
     except Exception as e:
         return jsonify({
             'success': False,
@@ -218,24 +218,24 @@ class Command(BaseCommand):
                     f"{connection.settings_dict['HOST']}:" \
                     f"{connection.settings_dict['PORT']}/" \
                     f"{connection.settings_dict['NAME']}"
-        
+
         source_engine = create_engine(django_url)
         target_engine = create_engine(options['target_url'])
-        
+
         with Session(source_engine) as source_session, \
              Session(target_engine) as target_session:
-            
+
             source_catalog = extract_catalog(source_session)
             target_catalog = extract_catalog(target_session)
-            
+
             changes = source_catalog.diff(target_catalog)
-            
+
             if not changes:
                 self.stdout.write("No changes detected")
                 return
-            
+
             sql_statements = [generate_sql(change) for change in changes]
-            
+
             if options['output']:
                 with open(options['output'], 'w') as f:
                     f.write('\n'.join(sql_statements))
@@ -254,26 +254,26 @@ from pgdelta.catalog import extract_catalog
 
 async def async_diff():
     """Example of using pgdelta with async SQLAlchemy."""
-    
+
     # Note: extract_catalog currently requires sync sessions
     # This is a pattern for working with async engines
-    
+
     source_engine = create_async_engine("postgresql+asyncpg://user:pass@localhost/db1")
     target_engine = create_async_engine("postgresql+asyncpg://user:pass@localhost/db2")
-    
+
     # Convert to sync for extraction
     source_sync = source_engine.sync_engine
     target_sync = target_engine.sync_engine
-    
+
     with Session(source_sync) as source_session, \
          Session(target_sync) as target_session:
-        
+
         source_catalog = extract_catalog(source_session)
         target_catalog = extract_catalog(target_session)
-        
+
         changes = source_catalog.diff(target_catalog)
         sql_statements = [generate_sql(change) for change in changes]
-        
+
         return sql_statements
 
 # Usage
@@ -305,19 +305,19 @@ def postgres_container():
 
 def test_table_creation_diff(postgres_container):
     """Test that table creation is detected correctly."""
-    
+
     # Get connection URL
     url = postgres_container.get_connection_url()
     engine = create_engine(url)
-    
+
     with Session(engine) as session:
         # Create initial schema
         session.execute(text("CREATE SCHEMA test"))
         session.commit()
-        
+
         # Extract empty catalog
         empty_catalog = extract_catalog(session)
-        
+
         # Add a table
         session.execute(text("""
             CREATE TABLE test.users (
@@ -326,13 +326,13 @@ def test_table_creation_diff(postgres_container):
             )
         """))
         session.commit()
-        
+
         # Extract catalog with table
         table_catalog = extract_catalog(session)
-        
+
         # Generate diff
         changes = empty_catalog.diff(table_catalog)
-        
+
         # Should have one CREATE TABLE change
         assert len(changes) == 1
         assert "CREATE TABLE" in generate_sql(changes[0])
@@ -349,14 +349,14 @@ from sqlalchemy.orm import Session
 
 def test_roundtrip_fidelity():
     """Test that Extract → Diff → Generate → Apply produces identical schemas."""
-    
+
     # Setup two identical databases
     source_engine = create_engine("postgresql://user:pass@localhost/source")
     target_engine = create_engine("postgresql://user:pass@localhost/target")
-    
+
     with Session(source_engine) as source_session, \
          Session(target_engine) as target_session:
-        
+
         # Apply initial schema to source
         source_session.execute(text("""
             CREATE SCHEMA app;
@@ -366,23 +366,23 @@ def test_roundtrip_fidelity():
             );
         """))
         source_session.commit()
-        
+
         # Extract catalogs
         source_catalog = extract_catalog(source_session)
         target_catalog = extract_catalog(target_session)
-        
+
         # Generate migration
         changes = target_catalog.diff(source_catalog)
         sql_statements = [generate_sql(change) for change in changes]
-        
+
         # Apply migration to target
         for sql in sql_statements:
             target_session.execute(text(sql))
         target_session.commit()
-        
+
         # Extract final catalog
         final_catalog = extract_catalog(target_session)
-        
+
         # Should be semantically identical
         assert source_catalog.semantically_equals(final_catalog)
 ```

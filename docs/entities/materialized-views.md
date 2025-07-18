@@ -32,10 +32,10 @@ DROP MATERIALIZED VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]
 
 ```sql
 CREATE MATERIALIZED VIEW "public"."user_stats" AS
-SELECT 
+SELECT
     DATE_TRUNC('month', created_at) as month,
     COUNT(*) as user_count
-FROM users 
+FROM users
 GROUP BY DATE_TRUNC('month', created_at);
 ```
 
@@ -63,7 +63,7 @@ CREATE TABLE orders (
 );
 
 CREATE MATERIALIZED VIEW monthly_sales AS
-SELECT 
+SELECT
     DATE_TRUNC('month', created_at) as month,
     SUM(total) as total_sales,
     COUNT(*) as order_count
@@ -90,7 +90,7 @@ def generate_create_materialized_view_sql(change: CreateMaterializedView) -> str
     """Generate CREATE MATERIALIZED VIEW SQL."""
     quoted_schema = f'"{change.namespace}"'
     quoted_matview = f'"{change.relname}"'
-    
+
     return f'CREATE MATERIALIZED VIEW {quoted_schema}.{quoted_matview} AS {change.definition};'
 ```
 

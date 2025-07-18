@@ -51,7 +51,7 @@ ALTER SCHEMA name OWNER TO { new_owner | CURRENT_ROLE | CURRENT_USER | SESSION_U
 CREATE SCHEMA "analytics";
 ```
 
-#### DROP SCHEMA  
+#### DROP SCHEMA
 - Schema deletion
 - Dependency-aware ordering (drops contents first)
 - Cascade behavior handled by dependency resolution
@@ -159,7 +159,7 @@ Schemas have dependencies with their contained objects:
 # Dependencies for CREATE SCHEMA
 depends_on = []  # Schemas have no dependencies
 
-# Dependencies for DROP SCHEMA  
+# Dependencies for DROP SCHEMA
 depends_on = [all_objects_in_schema]  # All contained objects
 ```
 
@@ -174,7 +174,7 @@ def test_create_schema_basic():
         stable_id="s:test_schema",
         nspname="test_schema"
     )
-    
+
     sql = generate_create_schema_sql(change)
     assert sql == 'CREATE SCHEMA "test_schema";'
 
@@ -184,7 +184,7 @@ def test_create_schema_quoted():
         stable_id="s:test-schema",
         nspname="test-schema"
     )
-    
+
     sql = generate_create_schema_sql(change)
     assert sql == 'CREATE SCHEMA "test-schema";'
 ```
@@ -197,20 +197,20 @@ def test_schema_roundtrip(postgres_session):
     # Create schema
     postgres_session.execute(text('CREATE SCHEMA "analytics"'))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Find schema
     schema = next(s for s in catalog.schemas if s.nspname == "analytics")
     assert schema.nspname == "analytics"
-    
+
     # Generate SQL
     change = CreateSchema(
         stable_id=f"s:{schema.nspname}",
         nspname=schema.nspname
     )
-    
+
     sql = generate_create_schema_sql(change)
     assert 'CREATE SCHEMA "analytics"' in sql
 ```
@@ -226,14 +226,14 @@ def test_schema_object_dependencies():
     CREATE TABLE app.users (id SERIAL PRIMARY KEY);
     CREATE INDEX idx_users_id ON app.users (id);
     """
-    
+
     changes = generate_changes(source_sql, target_sql)
-    
+
     # Should generate in correct order:
     # 1. CREATE SCHEMA "app";
     # 2. CREATE TABLE "app"."users" (...);
     # 3. CREATE INDEX "idx_users_id" ON "app"."users" (...);
-    
+
     assert isinstance(changes[0], CreateSchema)
     assert isinstance(changes[1], CreateTable)
     assert isinstance(changes[2], CreateIndex)
@@ -267,12 +267,12 @@ def validate_schema_name(name: str) -> bool:
     # Must be valid identifier
     if not name.isidentifier():
         return False
-    
+
     # Check for reserved words
     reserved = {'public', 'information_schema', 'pg_catalog'}
     if name.lower() in reserved:
         return False
-    
+
     return True
 ```
 
@@ -295,7 +295,7 @@ ALTER SCHEMA "analytics" OWNER TO analytics_user;
 CREATE SCHEMA "analytics" AUTHORIZATION analytics_user;
 
 -- With inline objects
-CREATE SCHEMA "analytics" 
+CREATE SCHEMA "analytics"
     CREATE TABLE metrics (id SERIAL PRIMARY KEY)
     CREATE VIEW metric_summary AS SELECT COUNT(*) FROM metrics;
 ```
@@ -351,7 +351,7 @@ schemas = {
 # Use consistent naming
 prefixes = {
     "app_": "Application schemas",
-    "rpt_": "Reporting schemas", 
+    "rpt_": "Reporting schemas",
     "tmp_": "Temporary schemas",
 }
 ```
@@ -368,12 +368,12 @@ def create_schema_with_objects():
         "CREATE INDEX \"idx_table1\" ON \"new_schema\".\"table1\" (...);",
     ]
 
-# Schema deletion pattern  
+# Schema deletion pattern
 def drop_schema_with_objects():
     """Drop schema objects in reverse dependency order."""
     return [
         "DROP INDEX \"new_schema\".\"idx_table1\";",
-        "DROP TABLE \"new_schema\".\"table1\";", 
+        "DROP TABLE \"new_schema\".\"table1\";",
         "DROP SCHEMA \"new_schema\";",
     ]
 ```

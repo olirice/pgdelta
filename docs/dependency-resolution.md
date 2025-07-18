@@ -10,7 +10,7 @@ Consider this PostgreSQL schema:
 -- 1. Create schema
 CREATE SCHEMA app;
 
--- 2. Create sequence  
+-- 2. Create sequence
 CREATE SEQUENCE app.user_id_seq;
 
 -- 3. Create table that uses sequence
@@ -23,7 +23,7 @@ CREATE TABLE app.users (
 CREATE INDEX idx_users_email ON app.users (email);
 
 -- 5. Create view that references table
-CREATE VIEW app.active_users AS 
+CREATE VIEW app.active_users AS
 SELECT * FROM app.users WHERE email IS NOT NULL;
 
 -- 6. Set sequence ownership
@@ -114,7 +114,7 @@ PostgreSQL's internal dependency tracking system that records explicit dependenc
 ```python
 class DependencyExtractor:
     """Extracts dependencies relevant to a changeset from catalogs."""
-    
+
     def __init__(self, master_catalog: PgCatalog, branch_catalog: PgCatalog):
         # Store both current state (master) and target state (branch)
         self.master_catalog = master_catalog
@@ -130,7 +130,7 @@ def _find_relevant_objects(self, changes: list[DDL], max_depth: int = 2) -> set[
     """Find all objects relevant to the changeset using transitive discovery."""
     # Start with objects being directly changed
     relevant = {change.stable_id for change in changes}
-    
+
     # Add transitive dependencies up to max_depth
     for _ in range(max_depth):
         new_objects = set()
@@ -143,7 +143,7 @@ def _find_relevant_objects(self, changes: list[DDL], max_depth: int = 2) -> set[
             new_objects.update(
                 self._get_direct_dependencies(obj_id, self.branch_catalog)
             )
-            
+
             # Add dependents from both catalogs
             # (objects that depend on this object)
             new_objects.update(
@@ -152,12 +152,12 @@ def _find_relevant_objects(self, changes: list[DDL], max_depth: int = 2) -> set[
             new_objects.update(
                 self._get_direct_dependents(obj_id, self.branch_catalog)
             )
-        
+
         # Stop if no new objects found
         if not new_objects - relevant:
             break
         relevant.update(new_objects)
-    
+
     return relevant
 ```
 
@@ -186,8 +186,8 @@ def _extract_from_catalog(
         ):
             # Tag each dependency with its source catalog
             model.add_dependency(
-                depend.dependent_stable_id, 
-                depend.referenced_stable_id, 
+                depend.dependent_stable_id,
+                depend.referenced_stable_id,
                 source  # "master" or "branch"
             )
 ```
@@ -205,21 +205,21 @@ def _extract_from_catalog(
 ```python
 class OperationSemantics:
     """Defines semantic rules for ordering operations based on dependencies."""
-    
+
     def generate_constraints(
         self, changes: list[DDL], model: DependencyModel
     ) -> list[Constraint]:
         """Generate ordering constraints from changes and dependency model."""
         constraints = []
-        
+
         # Add dependency-based constraints
         # (operations must respect object dependencies)
         constraints.extend(self._generate_dependency_constraints(changes, model))
-        
+
         # Add same-object operation constraints
         # (operations on same object have specific ordering rules)
         constraints.extend(self._generate_same_object_constraints(changes))
-        
+
         return constraints
 ```
 
@@ -232,13 +232,13 @@ def _analyze_dependency_constraint(
     self, i: int, change_a: DDL, j: int, change_b: DDL, model: DependencyModel
 ) -> Constraint | None:
     """Analyze if two changes should be ordered based on dependencies."""
-    
+
     # CRITICAL: Choose appropriate catalog state for each operation
     # For CREATE operations, use branch catalog (where dependencies will exist after creation)
     # For DROP operations, use master catalog (where dependencies exist before deletion)
     source_a = "master" if is_drop_change(change_a) else "branch"
     source_b = "master" if is_drop_change(change_b) else "branch"
-    
+
     # Check for dependencies in appropriate states
     a_depends_on_b = model.has_dependency(
         change_a.stable_id, change_b.stable_id, source_a
@@ -246,7 +246,7 @@ def _analyze_dependency_constraint(
     b_depends_on_a = model.has_dependency(
         change_b.stable_id, change_a.stable_id, source_b
     )
-    
+
     # Apply semantic rules based on discovered dependencies
     if a_depends_on_b:
         return self._dependency_semantic_rule(
@@ -256,7 +256,7 @@ def _analyze_dependency_constraint(
         return self._dependency_semantic_rule(
             j, change_b, i, change_a, "b_depends_on_a"
         )
-    
+
     return None
 ```
 
@@ -279,7 +279,7 @@ def _dependency_semantic_rule(
     reason: str,
 ) -> Constraint | None:
     """Apply semantic rules when dependent_change depends on referenced_change."""
-    
+
     # Rule 1: For DROP operations, drop dependents before dependencies
     if is_drop_change(dependent_change) and is_drop_change(referenced_change):
         return Constraint(
@@ -288,7 +288,7 @@ def _dependency_semantic_rule(
             ref_idx,                    # Before dropping dependency
             f"DROP dependent before dependency ({reason})",
         )
-    
+
     # Rule 2: For CREATE operations, create dependencies before dependents
     elif is_create_change(dependent_change) and is_create_change(referenced_change):
         return Constraint(
@@ -297,7 +297,7 @@ def _dependency_semantic_rule(
             dep_idx,                    # Before creating dependent
             f"CREATE dependency before dependent ({reason})",
         )
-    
+
     # Rule 3: For mixed operations, ensure dependencies exist first
     elif (
         is_create_change(dependent_change)
@@ -314,7 +314,7 @@ def _dependency_semantic_rule(
             dep_idx,                    # Before creating/altering dependent
             f"Ensure dependency exists before dependent ({reason})",
         )
-    
+
     # Rule 4: DROP before CREATE/ALTER/REPLACE
     elif is_drop_change(referenced_change) and (
         is_create_change(dependent_change)
@@ -327,7 +327,7 @@ def _dependency_semantic_rule(
             dep_idx,                    # Before CREATE/ALTER/REPLACE
             f"DROP before CREATE/ALTER/REPLACE ({reason})",
         )
-    
+
     return None
 ```
 
@@ -342,7 +342,7 @@ Some PostgreSQL relationships require special handling:
 if is_create_change(dependent_change) and is_create_change(referenced_change):
     from pgdelta.changes.sequence import CreateSequence
     from pgdelta.changes.table import CreateTable
-    
+
     # If sequence depends on table, invert for CREATE operations
     if isinstance(dependent_change, CreateSequence) and isinstance(
         referenced_change, CreateTable
@@ -365,12 +365,12 @@ When multiple operations affect the same object, they need specific ordering:
 def _generate_same_object_constraints(self, changes: list[DDL]) -> list[Constraint]:
     """Generate constraints for operations on the same object."""
     constraints = []
-    
+
     # Group changes by object
     object_groups = defaultdict(list)
     for i, change in enumerate(changes):
         object_groups[change.stable_id].append(i)
-    
+
     # Add ordering constraints within each group
     for indices in object_groups.values():
         if len(indices) > 1:
@@ -378,7 +378,7 @@ def _generate_same_object_constraints(self, changes: list[DDL]) -> list[Constrai
             sorted_indices = sorted(
                 indices, key=lambda i: self._get_operation_priority(changes[i])
             )
-            
+
             # Add sequential constraints
             for k in range(len(sorted_indices) - 1):
                 constraints.append(
@@ -389,7 +389,7 @@ def _generate_same_object_constraints(self, changes: list[DDL]) -> list[Constrai
                         "Same object operation priority",
                     )
                 )
-    
+
     return constraints
 
 def _get_operation_priority(self, change: DDL) -> int:
@@ -415,22 +415,22 @@ def _get_operation_priority(self, change: DDL) -> int:
 ```python
 class ConstraintSolver:
     """Solves ordering constraints to produce a valid sequence."""
-    
+
     def solve(self, changes: list[DDL], constraints: list[Constraint]) -> list[DDL]:
         """Solve constraints using topological sorting."""
         # Build constraint graph
         graph = nx.DiGraph()
-        
+
         # Add all changes as nodes
         for i in range(len(changes)):
             graph.add_node(i)
-        
+
         # Add constraint edges
         for constraint in constraints:
             if constraint.constraint_type == ConstraintType.BEFORE:
                 # Add directed edge from A to B (A must come before B)
                 graph.add_edge(constraint.change_a_index, constraint.change_b_index)
-        
+
         # Topological sort
         try:
             ordered_indices = list(nx.topological_sort(graph))
@@ -608,11 +608,11 @@ def _analyze_dependency_constraint(
     self, i: int, change_a: DDL, j: int, change_b: DDL, model: DependencyModel
 ) -> Constraint | None:
     """Analyze if two changes should be ordered based on dependencies."""
-    
+
     # CRITICAL: Choose appropriate catalog state for each operation
     source_a = "master" if is_drop_change(change_a) else "branch"
     source_b = "master" if is_drop_change(change_b) else "branch"
-    
+
     # Check for dependencies in appropriate states
     a_depends_on_b = model.has_dependency(
         change_a.stable_id, change_b.stable_id, source_a
@@ -620,7 +620,7 @@ def _analyze_dependency_constraint(
     b_depends_on_a = model.has_dependency(
         change_b.stable_id, change_a.stable_id, source_b
     )
-    
+
     # Apply semantic rules...
 ```
 
@@ -667,8 +667,8 @@ if (
     and not depend.referenced_stable_id.startswith("unknown.")
 ):
     model.add_dependency(
-        depend.dependent_stable_id, 
-        depend.referenced_stable_id, 
+        depend.dependent_stable_id,
+        depend.referenced_stable_id,
         source
     )
 ```
@@ -686,10 +686,10 @@ if (
 def extract_for_changeset(self, changes: list[DDL]) -> DependencyModel:
     """Extract only dependencies relevant to the changeset."""
     model = DependencyModel()
-    
+
     # Find all objects relevant to the changeset
     relevant_objects = self._find_relevant_objects(changes)
-    
+
     # Extract dependencies from both catalogs for relevant objects
     self._extract_from_catalog(
         model, self.master_catalog, relevant_objects, "master"
@@ -697,7 +697,7 @@ def extract_for_changeset(self, changes: list[DDL]) -> DependencyModel:
     self._extract_from_catalog(
         model, self.branch_catalog, relevant_objects, "branch"
     )
-    
+
     return model
 ```
 
@@ -727,7 +727,7 @@ class DependencyModel:
         # Build indexes for fast lookup
         self._dependency_index: dict[str, set[str]] = defaultdict(set)
         self._reverse_index: dict[str, set[str]] = defaultdict(set)
-    
+
     def add_dependency(self, dependent: str, referenced: str, source: str = "") -> None:
         """Add a dependency between objects."""
         dep = ObjectDependency(dependent, referenced, source)
@@ -751,15 +751,15 @@ def test_create_sequence_before_table():
         CreateTable(stable_id="t:app.users", ...),
         CreateSequence(stable_id="s:app.user_id_seq", ...),
     ]
-    
+
     # Build dependency model
     model = DependencyModel()
     model.add_dependency("t:app.users", "s:app.user_id_seq", "branch")
-    
+
     # Resolve dependencies
     resolver = DependencyResolver(master_catalog, branch_catalog)
     ordered_changes = resolver.resolve_dependencies(changes)
-    
+
     # Verify sequence comes before table
     assert ordered_changes[0].stable_id == "s:app.user_id_seq"
     assert ordered_changes[1].stable_id == "t:app.users"
@@ -779,17 +779,17 @@ def test_complex_schema_dependencies():
         email TEXT NOT NULL
     );
     CREATE INDEX idx_users_email ON app.users (email);
-    CREATE VIEW app.active_users AS 
+    CREATE VIEW app.active_users AS
     SELECT * FROM app.users WHERE email IS NOT NULL;
     ALTER SEQUENCE app.user_id_seq OWNED BY app.users.id;
     """
-    
+
     # Generate changes
     changes = generate_changes_from_sql(sql)
-    
+
     # Resolve dependencies
     ordered_changes = resolve_dependencies(changes, master_catalog, branch_catalog)
-    
+
     # Verify correct ordering
     assert_schema_created_first(ordered_changes)
     assert_sequence_created_before_table(ordered_changes)
@@ -804,19 +804,19 @@ def test_dependency_roundtrip_fidelity():
     """Test that dependency resolution maintains roundtrip fidelity."""
     # Extract catalog from database
     original_catalog = extract_catalog(session)
-    
+
     # Generate changes to recreate schema
     changes = generate_recreation_changes(original_catalog)
-    
+
     # Resolve dependencies
     ordered_changes = resolve_dependencies(changes, empty_catalog, original_catalog)
-    
+
     # Apply changes to empty database
     apply_changes(ordered_changes, empty_session)
-    
+
     # Extract new catalog
     new_catalog = extract_catalog(empty_session)
-    
+
     # Verify catalogs are semantically identical
     assert original_catalog.semantically_equals(new_catalog)
 ```
@@ -842,10 +842,10 @@ def debug_constraints(changes: list[DDL], constraints: list[Constraint]):
 def export_dependency_graph(model: DependencyModel, filename: str):
     """Export dependency graph for visualization."""
     graph = nx.DiGraph()
-    
+
     for dep in model.dependencies:
         graph.add_edge(dep.referenced, dep.dependent, source=dep.source)
-    
+
     nx.write_graphml(graph, filename)
     # Open in graph visualization tool like Gephi or yEd
 ```
@@ -856,13 +856,13 @@ def export_dependency_graph(model: DependencyModel, filename: str):
 def diagnose_cyclic_dependency(changes: list[DDL], constraints: list[Constraint]):
     """Diagnose cyclic dependency errors."""
     graph = nx.DiGraph()
-    
+
     for i in range(len(changes)):
         graph.add_node(i)
-    
+
     for constraint in constraints:
         graph.add_edge(constraint.change_a_index, constraint.change_b_index)
-    
+
     try:
         cycles = list(nx.simple_cycles(graph))
         print(f"Found {len(cycles)} cycles:")
@@ -946,7 +946,7 @@ def monitor_dependency_resolution_performance():
     start_time = time.time()
     ordered_changes = resolve_dependencies(changes, master_catalog, branch_catalog)
     end_time = time.time()
-    
+
     print(f"Resolved {len(changes)} changes in {end_time - start_time:.2f} seconds")
     print(f"Found {len(ordered_changes)} ordered operations")
 ```

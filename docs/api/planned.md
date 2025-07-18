@@ -111,7 +111,7 @@ System information endpoint.
   "version": "0.4.0",
   "supported_postgres_versions": ["13", "14", "15", "16", "17"],
   "supported_entities": [
-    "schemas", "tables", "indexes", "constraints", 
+    "schemas", "tables", "indexes", "constraints",
     "views", "functions", "triggers", "sequences"
   ],
   "system": {
@@ -133,13 +133,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 async def async_diff():
     source_engine = create_async_engine("postgresql+asyncpg://...")
     target_engine = create_async_engine("postgresql+asyncpg://...")
-    
+
     async with AsyncSession(source_engine) as source_session, \
                AsyncSession(target_engine) as target_session:
-        
+
         source_catalog = await extract_catalog_async(source_session)
         target_catalog = await extract_catalog_async(target_session)
-        
+
         changes = await source_catalog.diff_async(target_catalog)
         return changes
 ```
@@ -162,7 +162,7 @@ from pgdelta.catalog import extract_catalog
 
 # Extract only specific schemas
 catalog = extract_catalog(
-    session, 
+    session,
     schema_filter=['public', 'app'],
     exclude_system_objects=True
 )
@@ -213,25 +213,25 @@ catalog.register_handler(CustomTableHandler())
 # pgdelta.yml
 pgdelta:
   version: "0.2.0"
-  
+
   databases:
     source:
       connection_string: "postgresql://user:pass@localhost/source"
       schema_filter: ["public", "app"]
-    
+
     target:
       connection_string: "postgresql://user:pass@localhost/target"
       schema_filter: ["public", "app"]
-  
+
   options:
     verify: true
     include_drops: true
     dependency_resolution: "strict"
-    
+
   output:
     format: "sql"
     file: "migration.sql"
-    
+
   logging:
     level: "INFO"
     file: "pgdelta.log"
@@ -258,15 +258,15 @@ from pgdelta.plugins import EntityPlugin
 
 class CustomExtensionPlugin(EntityPlugin):
     entity_type = "extension"
-    
+
     def extract(self, session):
         # Extract custom entity data
         pass
-    
+
     def diff(self, source, target):
         # Generate changes for custom entity
         pass
-    
+
     def generate_sql(self, change):
         # Generate SQL for custom entity
         pass
@@ -472,7 +472,7 @@ All features described in this document are **not implemented** and represent pl
 
 ## Contributing
 
-These planned features are subject to change based on community feedback and requirements. 
+These planned features are subject to change based on community feedback and requirements.
 
 To contribute to the planning process:
 1. Review the [Contributing Guide](../contributing/setup.md)

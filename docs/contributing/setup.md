@@ -253,7 +253,7 @@ def test_create_table_sql_generation():
             PgAttribute(attname="id", type_name="integer", attnotnull=True),
         ]
     )
-    
+
     sql = generate_create_table_sql(change)
     assert "CREATE TABLE \"public\".\"users\"" in sql
     assert "\"id\" integer NOT NULL" in sql
@@ -273,13 +273,13 @@ def test_table_creation_roundtrip(postgres_session):
         )
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Verify table exists
     assert "t:public.test_table" in catalog.classes
-    
+
     # Verify columns
     table = catalog.classes["t:public.test_table"]
     columns = catalog.get_class_attributes(table.stable_id)
@@ -296,20 +296,20 @@ def test_complex_schema_roundtrip(postgres_session):
     """Test roundtrip fidelity with complex schema."""
     # Create complex schema
     setup_complex_schema(postgres_session)
-    
+
     # Extract original catalog
     original_catalog = extract_catalog(postgres_session)
-    
+
     # Generate changes to recreate schema
     empty_catalog = create_empty_catalog()
     changes = empty_catalog.diff(original_catalog)
-    
+
     # Apply changes to empty database
     apply_changes_to_empty_database(changes)
-    
+
     # Extract final catalog
     final_catalog = extract_catalog(empty_postgres_session)
-    
+
     # Verify catalogs are semantically identical
     assert original_catalog.semantically_equals(final_catalog)
 ```
@@ -376,16 +376,16 @@ Use Google-style docstrings:
 ```python
 def generate_sql(change: DDL) -> str:
     """Generate SQL DDL from a change object.
-    
+
     Args:
         change: The change object to generate SQL for.
-        
+
     Returns:
         SQL DDL statement as a string.
-        
+
     Raises:
         NotImplementedError: If the change type is not supported.
-        
+
     Example:
         >>> change = CreateTable(stable_id="t:public.users", ...)
         >>> sql = generate_sql(change)

@@ -28,9 +28,9 @@ DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]
 - Schema-qualified view names
 
 ```sql
-CREATE VIEW "public"."active_users" AS 
-SELECT id, email, created_at 
-FROM users 
+CREATE VIEW "public"."active_users" AS
+SELECT id, email, created_at
+FROM users
 WHERE is_active = true;
 ```
 
@@ -100,14 +100,14 @@ def generate_create_view_sql(change: CreateView) -> str:
     """Generate CREATE VIEW SQL."""
     quoted_schema = f'"{change.namespace}"'
     quoted_view = f'"{change.relname}"'
-    
+
     return f'CREATE VIEW {quoted_schema}.{quoted_view} AS {change.definition};'
 
 def generate_replace_view_sql(change: ReplaceView) -> str:
     """Generate CREATE OR REPLACE VIEW SQL."""
     quoted_schema = f'"{change.namespace}"'
     quoted_view = f'"{change.relname}"'
-    
+
     return f'CREATE OR REPLACE VIEW {quoted_schema}.{quoted_view} AS {change.definition};'
 ```
 

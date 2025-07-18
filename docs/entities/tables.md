@@ -28,7 +28,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } | UNLOGGED ] TABLE [ IF NOT EXI
 ```sql
 ALTER TABLE [ IF EXISTS ] [ ONLY ] name [ * ]
     action [, ... ]
-    
+
 -- Where action is one of:
 ADD [ COLUMN ] [ IF NOT EXISTS ] column_name data_type [ COLLATE collation ] [ column_constraint [ ... ] ]
 DROP [ COLUMN ] [ IF EXISTS ] column_name [ RESTRICT | CASCADE ]
@@ -225,7 +225,7 @@ class PgAttribute:
     default_value: str | None  # DEFAULT expression
     is_generated: bool         # Generated column flag
     generated_expression: str | None  # Generation expression
-    
+
     @property
     def formatted_type(self) -> str:
         """Format type with precision/scale."""
@@ -239,14 +239,14 @@ def generate_create_table_sql(change: CreateTable) -> str:
     """Generate CREATE TABLE SQL."""
     quoted_schema = f'"{change.namespace}"'
     quoted_table = f'"{change.relname}"'
-    
+
     sql_parts = [f"CREATE TABLE {quoted_schema}.{quoted_table} ("]
-    
+
     # Add columns
     column_defs = []
     for col in change.columns:
         col_def = f'  "{col.attname}" {col.formatted_type}'
-        
+
         if col.is_generated:
             col_def += f" GENERATED ALWAYS AS ({col.generated_expression}) STORED"
             if col.attnotnull:
@@ -256,17 +256,17 @@ def generate_create_table_sql(change: CreateTable) -> str:
                 col_def += f" DEFAULT {col.default_value}"
             if col.attnotnull:
                 col_def += " NOT NULL"
-        
+
         column_defs.append(col_def)
-    
+
     sql_parts.append("\n" + ",\n".join(column_defs) + "\n")
     sql_parts.append(")")
-    
+
     # Add inheritance
     if change.inherits_from:
         inherits_tables = [f'"{table}"' for table in change.inherits_from]
         sql_parts.append(f" INHERITS ({', '.join(inherits_tables)})")
-    
+
     return "".join(sql_parts) + ";"
 ```
 
@@ -283,14 +283,14 @@ def test_create_table_basic():
         attnotnull=True,
         default_value="nextval('users_id_seq'::regclass)"
     )
-    
+
     change = CreateTable(
         stable_id="t:public.users",
         namespace="public",
-        relname="users", 
+        relname="users",
         columns=[column]
     )
-    
+
     sql = generate_create_table_sql(change)
     assert "CREATE TABLE \"public\".\"users\"" in sql
     assert "\"id\" integer DEFAULT nextval('users_id_seq'::regclass) NOT NULL" in sql
@@ -310,14 +310,14 @@ def test_table_roundtrip(postgres_session):
         )
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Find table
     table = next(t for t in catalog.tables if t.relname == "test_table")
     assert len(table.columns) == 3
-    
+
     # Verify column properties
     id_col = next(c for c in table.columns if c.attname == "id")
     assert id_col.attnotnull
@@ -331,13 +331,13 @@ def test_add_column():
     """Test ADD COLUMN generation."""
     source_sql = "CREATE TABLE users (id SERIAL PRIMARY KEY);"
     target_sql = "CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);"
-    
+
     changes = generate_changes(source_sql, target_sql)
-    
+
     alter_change = next(c for c in changes if isinstance(c, AlterTable))
     assert alter_change.add_columns
     assert alter_change.add_columns[0].attname == "email"
-    
+
     sql = generate_alter_table_sql(alter_change)
     assert "ALTER TABLE \"public\".\"users\" ADD COLUMN \"email\" text;" in sql
 ```
@@ -367,7 +367,7 @@ def validate_type_compatibility(old_type: str, new_type: str) -> bool:
         ("varchar", "text"),
         ("numeric", "text"),
     }
-    
+
     return (old_type, new_type) in safe_conversions
 ```
 

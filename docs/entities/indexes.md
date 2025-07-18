@@ -208,7 +208,7 @@ class PgIndex:
     is_unique: bool               # Unique index flag
     is_primary: bool              # Primary key index flag
     is_exclusion: bool            # Exclusion constraint index flag
-    
+
     @property
     def stable_id(self) -> str:
         """Stable identifier for cross-database comparison."""
@@ -222,11 +222,11 @@ def generate_create_index_sql(change: CreateIndex) -> str:
     """Generate CREATE INDEX SQL from the stored index definition."""
     # PostgreSQL's pg_get_indexdef() returns the complete CREATE INDEX statement
     index_def = change.index.index_definition
-    
+
     # Ensure it ends with a semicolon
     if not index_def.endswith(";"):
         index_def += ";"
-    
+
     return index_def
 ```
 
@@ -341,12 +341,12 @@ def test_create_index_basic():
         is_primary=False,
         is_exclusion=False
     )
-    
+
     change = CreateIndex(
         stable_id="i:public.idx_users_email",
         index=index
     )
-    
+
     sql = generate_create_index_sql(change)
     assert 'CREATE INDEX "idx_users_email"' in sql
     assert 'ON "public"."users"' in sql
@@ -366,10 +366,10 @@ def test_index_roundtrip(postgres_session):
         CREATE INDEX idx_test_email ON test_table (email);
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Find index
     index = next(i for i in catalog.indexes if i.indexname == "idx_test_email")
     assert index.tablename == "test_table"
@@ -388,29 +388,29 @@ def test_index_performance():
             id SERIAL PRIMARY KEY,
             value INTEGER
         );
-        INSERT INTO perf_test (value) 
+        INSERT INTO perf_test (value)
         SELECT generate_series(1, 100000);
     """))
-    
+
     # Test query without index
     explain_result = postgres_session.execute(text("""
         EXPLAIN (FORMAT JSON) SELECT * FROM perf_test WHERE value = 50000
     """))
-    
+
     # Should use sequential scan
     plan = explain_result.fetchone()[0]
     assert "Seq Scan" in str(plan)
-    
+
     # Add index
     postgres_session.execute(text("""
         CREATE INDEX idx_perf_value ON perf_test (value);
     """))
-    
+
     # Test query with index
     explain_result = postgres_session.execute(text("""
         EXPLAIN (FORMAT JSON) SELECT * FROM perf_test WHERE value = 50000
     """))
-    
+
     # Should use index scan
     plan = explain_result.fetchone()[0]
     assert "Index Scan" in str(plan)
@@ -493,13 +493,13 @@ monitor_queries = {
         WHERE idx_scan = 0
         ORDER BY schemaname, tablename, indexname;
     """,
-    
+
     "index_size": """
         SELECT schemaname, tablename, indexname, pg_size_pretty(pg_relation_size(indexrelid))
         FROM pg_stat_user_indexes
         ORDER BY pg_relation_size(indexrelid) DESC;
     """,
-    
+
     "duplicate_indexes": """
         SELECT i1.schemaname, i1.tablename, i1.indexname, i2.indexname
         FROM pg_stat_user_indexes i1
@@ -537,10 +537,10 @@ def validate_index_expression(expression: str) -> bool:
     # Check for common issues
     if "SELECT" in expression.upper():
         return False  # Subqueries not allowed
-    
+
     if expression.count("(") != expression.count(")"):
         return False  # Unmatched parentheses
-    
+
     return True
 ```
 

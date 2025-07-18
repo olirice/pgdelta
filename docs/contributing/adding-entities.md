@@ -41,26 +41,26 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class PgIndex(BasePgModel):
     """PostgreSQL index model."""
-    
+
     # Identity fields (uniquely identify the index)
     indexname: str = field(metadata={"tag": "identity"})
     schemaname: str = field(metadata={"tag": "identity"})
-    
+
     # Data fields (index properties)
     tablename: str = field(metadata={"tag": "data"})
     index_definition: str = field(metadata={"tag": "data"})
     is_unique: bool = field(metadata={"tag": "data"})
     is_primary: bool = field(metadata={"tag": "data"})
     is_exclusion: bool = field(metadata={"tag": "data"})
-    
+
     # Internal fields (PostgreSQL internals)
     oid: int = field(metadata={"tag": "internal"})
-    
+
     @property
     def stable_id(self) -> str:
         """Cross-database portable identifier."""
         return f"i:{self.schemaname}.{self.indexname}"
-    
+
     @property
     def table_stable_id(self) -> str:
         """Stable ID of the table this index is on."""
@@ -69,10 +69,10 @@ class PgIndex(BasePgModel):
 
 def extract_indexes(session: Session) -> list[PgIndex]:
     """Extract indexes from PostgreSQL."""
-    
+
     # Use PostgreSQL's information_schema and pg_* tables
     query = text("""
-        SELECT 
+        SELECT
             i.indexname,
             i.schemaname,
             i.tablename,
@@ -85,17 +85,17 @@ def extract_indexes(session: Session) -> list[PgIndex]:
         JOIN pg_class pc ON pc.relname = i.tablename
         JOIN pg_namespace pn ON pn.nspname = i.schemaname AND pn.oid = pc.relnamespace
         JOIN pg_index pi ON pi.indexrelid = (
-            SELECT oid FROM pg_class 
-            WHERE relname = i.indexname 
+            SELECT oid FROM pg_class
+            WHERE relname = i.indexname
             AND relnamespace = pn.oid
         )
         WHERE i.schemaname NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
         ORDER BY i.schemaname, i.tablename, i.indexname
     """)
-    
+
     result = session.execute(query)
     indexes = []
-    
+
     for row in result:
         index = PgIndex(
             indexname=row.indexname,
@@ -108,7 +108,7 @@ def extract_indexes(session: Session) -> list[PgIndex]:
             oid=row.oid,
         )
         indexes.append(index)
-    
+
     return indexes
 ```
 
@@ -129,14 +129,14 @@ from .model.pg_index import PgIndex, extract_indexes
 @dataclass(frozen=True)
 class PgCatalog:
     """Immutable PostgreSQL catalog snapshot."""
-    
+
     # ... existing fields ...
     indexes: dict[str, PgIndex]  # Keyed by stable_id
     # ... rest of fields ...
 
 def extract_catalog(session: Session) -> PgCatalog:
     """Extract complete catalog from PostgreSQL session."""
-    
+
     # Extract all object types
     namespaces = extract_namespaces(session)
     classes = extract_classes(session)
@@ -144,7 +144,7 @@ def extract_catalog(session: Session) -> PgCatalog:
     constraints = extract_constraints(session)
     indexes = extract_indexes(session)  # Add this line
     # ... other extractions ...
-    
+
     return PgCatalog(
         namespaces={ns.stable_id: ns for ns in namespaces},
         classes={cls.stable_id: cls for cls in classes},
@@ -163,14 +163,14 @@ Create diff logic in `src/pgdelta/diff/orchestrator.py`:
 def diff_catalogs(master: PgCatalog, branch: PgCatalog) -> list[DDL]:
     """Generate changes to transform master to branch."""
     changes = []
-    
+
     # ... existing diffs ...
-    
+
     # Add index diffing
     changes.extend(diff_indexes(master.indexes, branch.indexes))
-    
+
     # ... rest of diffs ...
-    
+
     return changes
 
 def diff_indexes(
@@ -179,7 +179,7 @@ def diff_indexes(
 ) -> list[DDL]:
     """Diff indexes between catalogs."""
     changes = []
-    
+
     # Find indexes to create (in branch but not master)
     for stable_id, branch_index in branch_indexes.items():
         if stable_id not in master_indexes:
@@ -187,7 +187,7 @@ def diff_indexes(
                 stable_id=stable_id,
                 index=branch_index
             ))
-    
+
     # Find indexes to drop (in master but not branch)
     for stable_id, master_index in master_indexes.items():
         if stable_id not in branch_indexes:
@@ -195,7 +195,7 @@ def diff_indexes(
                 stable_id=stable_id,
                 index=master_index
             ))
-    
+
     # Find indexes to alter (in both but different)
     for stable_id, master_index in master_indexes.items():
         if stable_id in branch_indexes:
@@ -210,7 +210,7 @@ def diff_indexes(
                     stable_id=stable_id,
                     index=branch_index
                 ))
-    
+
     return changes
 ```
 
@@ -240,7 +240,7 @@ from ...model.pg_index import PgIndex
 @dataclass(frozen=True)
 class CreateIndex:
     """Create index change."""
-    
+
     stable_id: str  # i:namespace.index_name
     index: PgIndex
 
@@ -249,11 +249,11 @@ def generate_create_index_sql(change: CreateIndex) -> str:
     """Generate CREATE INDEX SQL from the stored index definition."""
     # PostgreSQL's pg_get_indexdef() returns the complete CREATE INDEX statement
     index_def = change.index.index_definition
-    
+
     # Ensure it ends with a semicolon for consistency
     if not index_def.endswith(";"):
         index_def += ";"
-    
+
     return index_def
 ```
 
@@ -269,7 +269,7 @@ from ...model.pg_index import PgIndex
 @dataclass(frozen=True)
 class DropIndex:
     """Drop index change."""
-    
+
     stable_id: str  # i:namespace.index_name
     index: PgIndex
 
@@ -278,7 +278,7 @@ def generate_drop_index_sql(change: DropIndex) -> str:
     """Generate DROP INDEX SQL."""
     quoted_schema = f'"{change.index.schemaname}"'
     quoted_index = f'"{change.index.indexname}"'
-    
+
     return f"DROP INDEX {quoted_schema}.{quoted_index};"
 ```
 
@@ -293,18 +293,18 @@ from .index.drop import generate_drop_index_sql
 
 def generate_sql(change: DDL) -> str:
     """Generate SQL for a change object using structural pattern matching."""
-    
+
     match change:
         # ... existing cases ...
-        
+
         case CreateIndex() as create_index:
             return generate_create_index_sql(create_index)
-        
+
         case DropIndex() as drop_index:
             return generate_drop_index_sql(drop_index)
-        
+
         # ... rest of cases ...
-        
+
         case _:
             msg = f"Unsupported change type: {type(change)}"
             raise NotImplementedError(msg)
@@ -324,13 +324,13 @@ def extract_depends(
     # ... other parameters ...
 ) -> list[PgDepend]:
     """Extract dependencies from pg_depend."""
-    
+
     # ... existing OID mappings ...
-    
+
     # Map index OIDs (indexes also use pg_class)
     for index in indexes:
         oid_to_stable_id[("pg_class", index.oid)] = index.stable_id
-    
+
     # ... rest of function ...
 ```
 
@@ -361,7 +361,7 @@ def test_pg_index_stable_id():
         is_exclusion=False,
         oid=12345,
     )
-    
+
     assert index.stable_id == "i:public.idx_users_email"
 
 
@@ -377,7 +377,7 @@ def test_pg_index_table_stable_id():
         is_exclusion=False,
         oid=12345,
     )
-    
+
     assert index.table_stable_id == "t:public.users"
 
 
@@ -393,12 +393,12 @@ def test_create_index_sql_generation():
         is_exclusion=False,
         oid=12345,
     )
-    
+
     change = CreateIndex(
         stable_id="i:public.idx_users_email",
         index=index
     )
-    
+
     sql = generate_create_index_sql(change)
     assert 'CREATE INDEX "idx_users_email"' in sql
     assert 'ON "public"."users"' in sql
@@ -417,12 +417,12 @@ def test_drop_index_sql_generation():
         is_exclusion=False,
         oid=12345,
     )
-    
+
     change = DropIndex(
         stable_id="i:public.idx_users_email",
         index=index
     )
-    
+
     sql = generate_drop_index_sql(change)
     assert sql == 'DROP INDEX "public"."idx_users_email";'
 ```
@@ -448,17 +448,17 @@ def test_index_creation_roundtrip(postgres_session):
         CREATE INDEX idx_test_email ON test_table (email);
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Find the index
     index = None
     for idx in catalog.indexes.values():
         if idx.indexname == "idx_test_email":
             index = idx
             break
-    
+
     assert index is not None
     assert index.tablename == "test_table"
     assert index.schemaname == "public"
@@ -477,17 +477,17 @@ def test_unique_index_roundtrip(postgres_session):
         CREATE UNIQUE INDEX idx_test_email_unique ON test_table (email);
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Find the unique index
     index = None
     for idx in catalog.indexes.values():
         if idx.indexname == "idx_test_email_unique":
             index = idx
             break
-    
+
     assert index is not None
     assert index.is_unique
     assert not index.is_primary
@@ -503,26 +503,26 @@ def test_index_diff_and_generation(postgres_session):
         );
     """))
     postgres_session.commit()
-    
+
     # Extract master catalog
     master_catalog = extract_catalog(postgres_session)
-    
+
     # Add index
     postgres_session.execute(text("""
         CREATE INDEX idx_test_email ON test_table (email);
     """))
     postgres_session.commit()
-    
+
     # Extract branch catalog
     branch_catalog = extract_catalog(postgres_session)
-    
+
     # Generate diff
     changes = master_catalog.diff(branch_catalog)
-    
+
     # Should have one CreateIndex change
     assert len(changes) == 1
     assert isinstance(changes[0], CreateIndex)
-    
+
     # Generate SQL
     sql = generate_sql(changes[0])
     assert "CREATE INDEX" in sql
@@ -623,18 +623,18 @@ __all__ = [
 @dataclass(frozen=True)
 class PgEntity(BasePgModel):
     """Template for new entity models."""
-    
+
     # Identity fields (what makes this object unique)
     name: str = field(metadata={"tag": "identity"})
     schema: str = field(metadata={"tag": "identity"})
-    
+
     # Data fields (object properties that matter for DDL)
     property1: str = field(metadata={"tag": "data"})
     property2: bool = field(metadata={"tag": "data"})
-    
+
     # Internal fields (PostgreSQL implementation details)
     oid: int = field(metadata={"tag": "internal"})
-    
+
     @property
     def stable_id(self) -> str:
         """Cross-database portable identifier."""
@@ -646,10 +646,10 @@ class PgEntity(BasePgModel):
 ```python
 def extract_entities(session: Session) -> list[PgEntity]:
     """Extract entities from PostgreSQL."""
-    
+
     # Use appropriate PostgreSQL system catalogs
     query = text("""
-        SELECT 
+        SELECT
             entity_name,
             schema_name,
             entity_property1,
@@ -660,10 +660,10 @@ def extract_entities(session: Session) -> list[PgEntity]:
         WHERE n.nspname NOT IN ('information_schema', 'pg_catalog')
         ORDER BY schema_name, entity_name
     """)
-    
+
     result = session.execute(query)
     entities = []
-    
+
     for row in result:
         entity = PgEntity(
             name=row.entity_name,
@@ -673,7 +673,7 @@ def extract_entities(session: Session) -> list[PgEntity]:
             oid=row.entity_oid,
         )
         entities.append(entity)
-    
+
     return entities
 ```
 
@@ -686,7 +686,7 @@ def diff_entities(
 ) -> list[DDL]:
     """Diff entities between catalogs."""
     changes = []
-    
+
     # Create entities that exist in branch but not master
     for stable_id, branch_entity in branch_entities.items():
         if stable_id not in master_entities:
@@ -694,7 +694,7 @@ def diff_entities(
                 stable_id=stable_id,
                 entity=branch_entity
             ))
-    
+
     # Drop entities that exist in master but not branch
     for stable_id, master_entity in master_entities.items():
         if stable_id not in branch_entities:
@@ -702,7 +702,7 @@ def diff_entities(
                 stable_id=stable_id,
                 entity=master_entity
             ))
-    
+
     # Alter entities that exist in both but are different
     for stable_id, master_entity in master_entities.items():
         if stable_id in branch_entities:
@@ -713,7 +713,7 @@ def diff_entities(
                     old_entity=master_entity,
                     new_entity=branch_entity
                 ))
-    
+
     return changes
 ```
 
@@ -724,16 +724,16 @@ def generate_create_entity_sql(change: CreateEntity) -> str:
     """Generate CREATE ENTITY SQL."""
     quoted_schema = f'"{change.entity.schema}"'
     quoted_name = f'"{change.entity.name}"'
-    
+
     sql_parts = [f"CREATE ENTITY {quoted_schema}.{quoted_name}"]
-    
+
     # Add entity-specific properties
     if change.entity.property1:
         sql_parts.append(f"WITH PROPERTY1 = '{change.entity.property1}'")
-    
+
     if change.entity.property2:
         sql_parts.append("WITH PROPERTY2")
-    
+
     return " ".join(sql_parts) + ";"
 ```
 
@@ -747,21 +747,21 @@ def test_entity_roundtrip(postgres_session):
         CREATE ENTITY test_entity WITH PROPERTY1 = 'value';
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Verify entity exists
     entity_id = "prefix:public.test_entity"
     assert entity_id in catalog.entities
-    
+
     # Verify properties
     entity = catalog.entities[entity_id]
     assert entity.name == "test_entity"
     assert entity.schema == "public"
     assert entity.property1 == "value"
     assert entity.property2 is True
-    
+
     # Test SQL generation
     changes = empty_catalog.diff(catalog)
     sql = generate_sql(changes[0])

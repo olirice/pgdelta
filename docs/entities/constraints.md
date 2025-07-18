@@ -13,7 +13,7 @@ ALTER TABLE table_name ADD CONSTRAINT constraint_name PRIMARY KEY (column_name [
 
 #### FOREIGN KEY
 ```sql
-ALTER TABLE table_name ADD CONSTRAINT constraint_name 
+ALTER TABLE table_name ADD CONSTRAINT constraint_name
 FOREIGN KEY (column_name [, ...]) REFERENCES referenced_table (column_name [, ...])
 [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]
 [ ON DELETE action ] [ ON UPDATE action ]
@@ -32,12 +32,12 @@ ALTER TABLE table_name ADD CONSTRAINT constraint_name CHECK (expression);
 
 #### EXCLUDE
 ```sql
-ALTER TABLE table_name ADD CONSTRAINT constraint_name 
-EXCLUDE [ USING method ] ( element WITH operator [, ...] ) 
+ALTER TABLE table_name ADD CONSTRAINT constraint_name
+EXCLUDE [ USING method ] ( element WITH operator [, ...] )
 [ WHERE predicate ];
 ```
 
-**References**: 
+**References**:
 - [PostgreSQL 17 ALTER TABLE](https://www.postgresql.org/docs/17/sql-altertable.html)
 - [PostgreSQL 17 CREATE TABLE](https://www.postgresql.org/docs/17/sql-createtable.html)
 
@@ -61,7 +61,7 @@ ALTER TABLE "public"."users" ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
 - Constraint deferrability options
 
 ```sql
-ALTER TABLE "public"."orders" ADD CONSTRAINT "orders_user_id_fkey" 
+ALTER TABLE "public"."orders" ADD CONSTRAINT "orders_user_id_fkey"
 FOREIGN KEY ("user_id") REFERENCES "public"."users" ("id") ON DELETE CASCADE;
 ```
 
@@ -89,7 +89,7 @@ ALTER TABLE "public"."users" ADD CONSTRAINT "users_age_check" CHECK (age >= 0);
 - Spatial exclusion constraints
 
 ```sql
-ALTER TABLE "public"."reservations" ADD CONSTRAINT "reservations_overlap_excl" 
+ALTER TABLE "public"."reservations" ADD CONSTRAINT "reservations_overlap_excl"
 EXCLUDE USING gist (room_id WITH =, during WITH &&);
 ```
 
@@ -139,7 +139,7 @@ CREATE TABLE order_items (
     product_id INTEGER,
     quantity INTEGER
 );
-ALTER TABLE order_items ADD CONSTRAINT order_items_pkey 
+ALTER TABLE order_items ADD CONSTRAINT order_items_pkey
 PRIMARY KEY (order_id, product_id);
 """
 ```
@@ -155,13 +155,13 @@ CREATE TABLE orders (
     user_id INTEGER,
     total DECIMAL(10,2)
 );
-ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
+ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
 FOREIGN KEY (user_id) REFERENCES users (id);
 """
 
 # Foreign key with cascade
 target_sql = """
-ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
+ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;
 """
 ```
@@ -185,7 +185,7 @@ CREATE TABLE products (
     name TEXT,
     category TEXT
 );
-ALTER TABLE products ADD CONSTRAINT products_name_category_key 
+ALTER TABLE products ADD CONSTRAINT products_name_category_key
 UNIQUE (name, category);
 """
 ```
@@ -209,7 +209,7 @@ CREATE TABLE products (
     price DECIMAL(10,2),
     discount_price DECIMAL(10,2)
 );
-ALTER TABLE products ADD CONSTRAINT products_price_check 
+ALTER TABLE products ADD CONSTRAINT products_price_check
 CHECK (price >= 0 AND discount_price >= 0 AND discount_price <= price);
 """
 ```
@@ -231,12 +231,12 @@ class PgConstraint:
     table_name: str            # Table name
     schema_name: str           # Schema name
     constraint_definition: str # Complete constraint definition
-    
+
     @property
     def constraint_type_name(self) -> str:
         type_map = {
             'p': 'PRIMARY KEY',
-            'f': 'FOREIGN KEY', 
+            'f': 'FOREIGN KEY',
             'u': 'UNIQUE',
             'c': 'CHECK',
             'x': 'EXCLUDE'
@@ -250,11 +250,11 @@ class PgConstraint:
 def generate_create_constraint_sql(change: CreateConstraint) -> str:
     """Generate ADD CONSTRAINT SQL."""
     constraint = change.constraint
-    
+
     quoted_schema = f'"{constraint.schema_name}"'
     quoted_table = f'"{constraint.table_name}"'
     quoted_constraint = f'"{constraint.conname}"'
-    
+
     return (
         f"ALTER TABLE {quoted_schema}.{quoted_table} "
         f"ADD CONSTRAINT {quoted_constraint} "
@@ -271,7 +271,7 @@ def generate_create_constraint_sql(change: CreateConstraint) -> str:
 ALTER TABLE users ADD CONSTRAINT users_pkey PRIMARY KEY (id);
 
 -- Multi-column
-ALTER TABLE order_items ADD CONSTRAINT order_items_pkey 
+ALTER TABLE order_items ADD CONSTRAINT order_items_pkey
 PRIMARY KEY (order_id, product_id);
 ```
 
@@ -285,16 +285,16 @@ PRIMARY KEY (order_id, product_id);
 
 ```sql
 -- Basic foreign key
-ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
+ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
 FOREIGN KEY (user_id) REFERENCES users (id);
 
 -- With actions
-ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
-FOREIGN KEY (user_id) REFERENCES users (id) 
+ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
+FOREIGN KEY (user_id) REFERENCES users (id)
 ON DELETE CASCADE ON UPDATE RESTRICT;
 
 -- Multi-column
-ALTER TABLE order_items ADD CONSTRAINT order_items_product_fkey 
+ALTER TABLE order_items ADD CONSTRAINT order_items_product_fkey
 FOREIGN KEY (product_id, variant_id) REFERENCES products (id, variant_id);
 ```
 
@@ -312,7 +312,7 @@ FOREIGN KEY (product_id, variant_id) REFERENCES products (id, variant_id);
 ALTER TABLE users ADD CONSTRAINT users_email_key UNIQUE (email);
 
 -- Multi-column
-ALTER TABLE products ADD CONSTRAINT products_name_category_key 
+ALTER TABLE products ADD CONSTRAINT products_name_category_key
 UNIQUE (name, category);
 
 -- Partial unique (via partial unique index)
@@ -331,11 +331,11 @@ CREATE UNIQUE INDEX users_active_email_key ON users (email) WHERE is_active = tr
 ALTER TABLE users ADD CONSTRAINT users_age_check CHECK (age >= 0);
 
 -- Complex check
-ALTER TABLE products ADD CONSTRAINT products_price_check 
+ALTER TABLE products ADD CONSTRAINT products_price_check
 CHECK (price >= 0 AND discount_price >= 0 AND discount_price <= price);
 
 -- Check with function
-ALTER TABLE users ADD CONSTRAINT users_email_check 
+ALTER TABLE users ADD CONSTRAINT users_email_check
 CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 ```
 
@@ -349,11 +349,11 @@ CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 
 ```sql
 -- Basic exclusion
-ALTER TABLE reservations ADD CONSTRAINT reservations_overlap_excl 
+ALTER TABLE reservations ADD CONSTRAINT reservations_overlap_excl
 EXCLUDE USING gist (room_id WITH =, during WITH &&);
 
 -- With WHERE clause
-ALTER TABLE reservations ADD CONSTRAINT reservations_active_overlap_excl 
+ALTER TABLE reservations ADD CONSTRAINT reservations_active_overlap_excl
 EXCLUDE USING gist (room_id WITH =, during WITH &&) WHERE (is_active = true);
 ```
 
@@ -377,12 +377,12 @@ def test_create_primary_key():
         schema_name="public",
         constraint_definition="PRIMARY KEY (id)"
     )
-    
+
     change = CreateConstraint(
         stable_id="c:public.users_pkey",
         constraint=constraint
     )
-    
+
     sql = generate_create_constraint_sql(change)
     assert 'ALTER TABLE "public"."users"' in sql
     assert 'ADD CONSTRAINT "users_pkey"' in sql
@@ -402,16 +402,16 @@ def test_foreign_key_roundtrip(postgres_session):
             user_id INTEGER,
             total DECIMAL(10,2)
         );
-        ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
+        ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE;
     """))
     postgres_session.commit()
-    
+
     # Extract catalog
     catalog = extract_catalog(postgres_session)
-    
+
     # Find constraint
-    constraint = next(c for c in catalog.constraints 
+    constraint = next(c for c in catalog.constraints
                      if c.conname == "orders_user_id_fkey")
     assert constraint.contype == "f"
     assert "ON DELETE CASCADE" in constraint.constraint_definition
@@ -426,7 +426,7 @@ def test_foreign_key_roundtrip(postgres_session):
 try:
     # Foreign key reference to non-existent table
     sql = """
-    ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
+    ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
     FOREIGN KEY (user_id) REFERENCES nonexistent_table (id);
     """
     # pgdelta validates references during extraction
@@ -453,11 +453,11 @@ def validate_constraint_name(name: str) -> bool:
     # Must be valid identifier
     if not name.replace('_', '').isalnum():
         return False
-    
+
     # Reasonable length
     if len(name) > 63:  # PostgreSQL limit
         return False
-    
+
     return True
 
 def validate_check_expression(expression: str) -> bool:
@@ -465,11 +465,11 @@ def validate_check_expression(expression: str) -> bool:
     # No subqueries
     if "SELECT" in expression.upper():
         return False
-    
+
     # Balanced parentheses
     if expression.count("(") != expression.count(")"):
         return False
-    
+
     return True
 ```
 
@@ -493,7 +493,7 @@ ALTER TABLE users VALIDATE CONSTRAINT users_age_check;
 #### Enhanced Foreign Keys
 ```sql
 -- MATCH options
-ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey 
+ALTER TABLE orders ADD CONSTRAINT orders_user_id_fkey
 FOREIGN KEY (user_id) REFERENCES users (id) MATCH FULL;
 ```
 

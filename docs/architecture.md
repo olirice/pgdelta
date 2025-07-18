@@ -62,7 +62,7 @@ Extract PostgreSQL schema information into immutable dataclasses.
 @dataclass(frozen=True)
 class PgCatalog:
     """Immutable PostgreSQL catalog snapshot."""
-    
+
     namespaces: dict[str, PgNamespace]      # Schemas
     classes: dict[str, PgClass]             # Tables, views, etc.
     attributes: dict[str, PgAttribute]      # Columns
@@ -94,7 +94,7 @@ class PgClass:
 ```python
 def extract_catalog(session: Session) -> PgCatalog:
     """Extract complete catalog from PostgreSQL session."""
-    
+
     # Extract all object types in dependency order
     namespaces = extract_namespaces(session)
     classes = extract_classes(session)
@@ -107,7 +107,7 @@ def extract_catalog(session: Session) -> PgCatalog:
     triggers = extract_triggers(session)
     types = extract_types(session)
     depends = extract_depends(session, ...)
-    
+
     # Build immutable catalog
     return PgCatalog(
         namespaces={ns.stable_id: ns for ns in namespaces},
@@ -129,12 +129,12 @@ def semantic_equality(self, other: BasePgModel) -> bool:
     """Compare objects based on identity and data fields only."""
     if type(self) != type(other):
         return False
-    
+
     for field in fields(self):
         if field.metadata.get("tag") in ("identity", "data"):
             if getattr(self, field.name) != getattr(other, field.name):
                 return False
-    
+
     return True
 ```
 
@@ -143,7 +143,7 @@ def semantic_equality(self, other: BasePgModel) -> bool:
 def diff_catalogs(master: PgCatalog, branch: PgCatalog) -> list[DDL]:
     """Generate changes to transform master to branch."""
     changes = []
-    
+
     # Diff each object type
     changes.extend(diff_namespaces(master.namespaces, branch.namespaces))
     changes.extend(diff_classes(master.classes, branch.classes))
@@ -151,7 +151,7 @@ def diff_catalogs(master: PgCatalog, branch: PgCatalog) -> list[DDL]:
     changes.extend(diff_constraints(master.constraints, branch.constraints))
     changes.extend(diff_indexes(master.indexes, branch.indexes))
     # ... other types
-    
+
     return changes
 ```
 
@@ -201,17 +201,17 @@ def diff_objects(
 ) -> list[DDL]:
     """Generic object diffing algorithm."""
     changes = []
-    
+
     # Find objects to create (in branch but not master)
     for stable_id, branch_obj in branch_objects.items():
         if stable_id not in master_objects:
             changes.append(create_fn(branch_obj))
-    
+
     # Find objects to drop (in master but not branch)
     for stable_id, master_obj in master_objects.items():
         if stable_id not in branch_objects:
             changes.append(drop_fn(master_obj))
-    
+
     # Find objects to alter (in both but different)
     for stable_id, master_obj in master_objects.items():
         if stable_id in branch_objects:
@@ -220,7 +220,7 @@ def diff_objects(
                 alter_change = alter_fn(master_obj, branch_obj)
                 if alter_change:
                     changes.append(alter_change)
-    
+
     return changes
 ```
 
@@ -233,22 +233,22 @@ def diff_table_columns(
     branch_catalog: PgCatalog,
 ) -> AlterTable | None:
     """Diff table columns to generate ALTER TABLE changes."""
-    
+
     master_columns = master_catalog.get_class_attributes(master_table.stable_id)
     branch_columns = branch_catalog.get_class_attributes(branch_table.stable_id)
-    
+
     # Find columns to add
     add_columns = []
     for branch_col in branch_columns:
         if not any(col.attname == branch_col.attname for col in master_columns):
             add_columns.append(branch_col)
-    
+
     # Find columns to drop
     drop_columns = []
     for master_col in master_columns:
         if not any(col.attname == master_col.attname for col in branch_columns):
             drop_columns.append(master_col.attname)
-    
+
     # Find columns to alter
     alter_columns = []
     for master_col in master_columns:
@@ -256,7 +256,7 @@ def diff_table_columns(
             if master_col.attname == branch_col.attname:
                 if not master_col.semantic_equality(branch_col):
                     alter_columns.append(AlterColumn(master_col, branch_col))
-    
+
     # Create ALTER TABLE change if any modifications
     if add_columns or drop_columns or alter_columns:
         return AlterTable(
@@ -267,7 +267,7 @@ def diff_table_columns(
             drop_columns=drop_columns,
             alter_columns=alter_columns,
         )
-    
+
     return None
 ```
 
@@ -282,23 +282,23 @@ Generate SQL DDL from change objects with proper dependency ordering.
 ```python
 def generate_sql(change: DDL) -> str:
     """Generate SQL for a change object using structural pattern matching."""
-    
+
     match change:
         case CreateSchema() as create_schema:
             return generate_create_schema_sql(create_schema)
-        
+
         case CreateTable() as create_table:
             return generate_create_table_sql(create_table)
-        
+
         case AlterTable() as alter_table:
             return generate_alter_table_sql(alter_table)
-        
+
         case CreateIndex() as create_index:
             return generate_create_index_sql(create_index)
-        
+
         case CreateConstraint() as create_constraint:
             return generate_create_constraint_sql(create_constraint)
-        
+
         case _:
             msg = f"Unsupported change type: {type(change)}"
             raise NotImplementedError(msg)
@@ -313,14 +313,14 @@ def generate_create_table_sql(change: CreateTable) -> str:
     """Generate CREATE TABLE SQL."""
     quoted_schema = f'"{change.namespace}"'
     quoted_table = f'"{change.relname}"'
-    
+
     sql_parts = [f"CREATE TABLE {quoted_schema}.{quoted_table} ("]
-    
+
     # Add columns
     column_defs = []
     for col in change.columns:
         col_def = f'  "{col.attname}" {col.formatted_type}'
-        
+
         if col.is_generated:
             col_def += f" GENERATED ALWAYS AS ({col.generated_expression}) STORED"
             if col.attnotnull:
@@ -330,12 +330,12 @@ def generate_create_table_sql(change: CreateTable) -> str:
                 col_def += f" DEFAULT {col.default_value}"
             if col.attnotnull:
                 col_def += " NOT NULL"
-        
+
         column_defs.append(col_def)
-    
+
     sql_parts.append("\n" + ",\n".join(column_defs) + "\n")
     sql_parts.append(")")
-    
+
     return "".join(sql_parts) + ";"
 ```
 
@@ -346,19 +346,19 @@ def generate_create_table_sql(change: CreateTable) -> str:
 @dataclass(frozen=True)
 class BasePgModel:
     """Base class for all PostgreSQL models."""
-    
+
     def semantic_equality(self, other: BasePgModel) -> bool:
         """Compare objects based on identity and data fields only."""
         if type(self) != type(other):
             return False
-        
+
         for field in fields(self):
             if field.metadata.get("tag") in ("identity", "data"):
                 if getattr(self, field.name) != getattr(other, field.name):
                     return False
-        
+
         return True
-    
+
     @property
     def stable_id(self) -> str:
         """Cross-database portable identifier."""
@@ -378,12 +378,12 @@ class PgAttribute:
     # Identity fields (used in semantic comparison)
     attname: str = field(metadata=IDENTITY)
     class_stable_id: str = field(metadata=IDENTITY)
-    
+
     # Data fields (used in semantic comparison)
     type_name: str = field(metadata=DATA)
     attnotnull: bool = field(metadata=DATA)
     default_value: str | None = field(metadata=DATA)
-    
+
     # Internal fields (ignored in semantic comparison)
     oid: int = field(metadata=INTERNAL)
     attnum: int = field(metadata=INTERNAL)
@@ -490,7 +490,7 @@ def test_create_table_sql_generation():
             PgAttribute(attname="email", type_name="text", attnotnull=True),
         ]
     )
-    
+
     sql = generate_create_table_sql(change)
     assert "CREATE TABLE \"public\".\"users\"" in sql
     assert "\"id\" integer NOT NULL" in sql
@@ -505,20 +505,20 @@ def test_full_diff_workflow(postgres_session):
     # Create initial schema
     postgres_session.execute(text("CREATE TABLE users (id SERIAL PRIMARY KEY)"))
     postgres_session.commit()
-    
+
     # Extract master catalog
     master_catalog = extract_catalog(postgres_session)
-    
+
     # Create target schema
     postgres_session.execute(text("ALTER TABLE users ADD COLUMN email TEXT"))
     postgres_session.commit()
-    
+
     # Extract branch catalog
     branch_catalog = extract_catalog(postgres_session)
-    
+
     # Generate changes
     changes = master_catalog.diff(branch_catalog)
-    
+
     # Verify changes
     assert len(changes) == 1
     assert isinstance(changes[0], AlterTable)
@@ -532,20 +532,20 @@ def test_roundtrip_fidelity(postgres_session):
     """Test roundtrip fidelity with complex schema."""
     # Create complex schema
     setup_complex_schema(postgres_session)
-    
+
     # Extract catalog
     original_catalog = extract_catalog(postgres_session)
-    
+
     # Generate recreation changes
     empty_catalog = PgCatalog(...)
     changes = empty_catalog.diff(original_catalog)
-    
+
     # Apply changes to empty database
     apply_changes(changes, empty_postgres_session)
-    
+
     # Extract final catalog
     final_catalog = extract_catalog(empty_postgres_session)
-    
+
     # Verify semantic equality
     assert original_catalog.semantically_equals(final_catalog)
 ```
@@ -591,7 +591,7 @@ def generate_test_schema(complexity: str = "simple") -> str:
             email TEXT NOT NULL UNIQUE
         );
         CREATE INDEX idx_users_email ON app.users (email);
-        CREATE VIEW app.active_users AS 
+        CREATE VIEW app.active_users AS
         SELECT * FROM app.users WHERE email IS NOT NULL;
         """
 ```
@@ -665,15 +665,15 @@ def generate_custom_change_sql(change: CustomChange) -> str:
 # Future extension point for plugins
 class PgDeltaPlugin:
     """Base class for pgdelta plugins."""
-    
+
     def pre_extract(self, session: Session) -> None:
         """Called before catalog extraction."""
         pass
-    
+
     def post_diff(self, changes: list[DDL]) -> list[DDL]:
         """Called after diff generation."""
         return changes
-    
+
     def pre_generate(self, changes: list[DDL]) -> list[DDL]:
         """Called before SQL generation."""
         return changes
@@ -699,7 +699,7 @@ async def parallel_sql_generation(changes: list[DDL]) -> list[str]:
     for change in changes:
         if can_generate_in_parallel(change):
             tasks.append(asyncio.create_task(generate_sql_async(change)))
-    
+
     return await asyncio.gather(*tasks)
 ```
 
@@ -708,17 +708,17 @@ async def parallel_sql_generation(changes: list[DDL]) -> list[str]:
 # Future: Cache catalog extractions and diff results
 class CachingCatalogExtractor:
     """Catalog extractor with caching."""
-    
+
     def __init__(self, cache_backend: CacheBackend):
         self.cache = cache_backend
-    
+
     def extract_catalog(self, session: Session) -> PgCatalog:
         cache_key = self._compute_cache_key(session)
         cached_catalog = self.cache.get(cache_key)
-        
+
         if cached_catalog:
             return cached_catalog
-        
+
         catalog = extract_catalog(session)
         self.cache.set(cache_key, catalog)
         return catalog

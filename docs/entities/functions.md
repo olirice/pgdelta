@@ -83,10 +83,10 @@ AS $$
 DECLARE
     order_count integer;
 BEGIN
-    SELECT COUNT(*) INTO order_count 
-    FROM orders 
+    SELECT COUNT(*) INTO order_count
+    FROM orders
     WHERE orders.user_id = $1;
-    
+
     RETURN order_count;
 END;
 $$;
@@ -101,8 +101,8 @@ RETURNS TABLE(id integer, user_id integer, total decimal)
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT id, user_id, total 
-    FROM orders 
+    SELECT id, user_id, total
+    FROM orders
     WHERE created_at >= CURRENT_DATE - INTERVAL '1 day' * days_back;
 $$;
 """
