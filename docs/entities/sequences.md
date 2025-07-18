@@ -24,7 +24,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE [ IF NOT EXISTS ] name
 ### ✅ Currently Supported
 - CREATE SEQUENCE with all options
 - DROP SEQUENCE
-- Sequence ownership (OWNED BY)
+- ALTER SEQUENCE OWNED BY
 - All sequence parameters (INCREMENT, MINVALUE, MAXVALUE, START, CACHE, CYCLE)
 
 ```sql
@@ -41,8 +41,8 @@ ALTER SEQUENCE "public"."users_id_seq" OWNED BY "public"."users"."id";
 ```
 
 ### ❌ Not Yet Supported
-- ALTER SEQUENCE operations
-- Sequence value management
+- ALTER SEQUENCE parameter modifications (planned)
+- RESTART operations (planned)
 
 ### 🚫 Intentionally Not Supported
 - TEMPORARY sequences (not persistent schema objects)

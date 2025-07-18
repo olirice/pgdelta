@@ -32,13 +32,20 @@ CREATE [ OR REPLACE ] FUNCTION
 
 ## pgdelta Support
 
-### ✅ Currently Supported
+### ✅ Currently Supported (via pg_get_functiondef)
 - CREATE FUNCTION with complete definition
 - DROP FUNCTION
 - CREATE OR REPLACE FUNCTION
+- CREATE PROCEDURE
+- DROP PROCEDURE
 - All function languages (SQL, PL/pgSQL, Python, etc.)
-- Function parameters and return types
-- Function attributes (IMMUTABLE, STABLE, VOLATILE, etc.)
+- All parameter modes (IN, OUT, INOUT, VARIADIC)
+- All return types including RETURNS TABLE
+- All function attributes (IMMUTABLE, STABLE, VOLATILE, etc.)
+- Security context (SECURITY DEFINER/INVOKER)
+- Cost and row estimates
+- Configuration parameter settings
+- All PostgreSQL function features
 
 ```sql
 CREATE FUNCTION "public"."calculate_tax"(amount decimal, rate decimal)
@@ -51,11 +58,8 @@ $function$;
 ```
 
 ### ❌ Not Yet Supported
-- Function overloading resolution improvements
-- Complex function dependency tracking
-
-### 🚫 Intentionally Not Supported
-- Runtime function execution (not DDL)
+- ALTER FUNCTION operations (planned)
+- ALTER PROCEDURE operations (planned)
 
 ## Usage Examples
 

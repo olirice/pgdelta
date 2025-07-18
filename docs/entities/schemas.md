@@ -63,18 +63,21 @@ DROP SCHEMA "analytics";
 ### ❌ Not Yet Supported
 
 #### CREATE SCHEMA Options
-- `IF NOT EXISTS` clause
 - `AUTHORIZATION` clause for ownership
 - Schema elements (inline object creation)
 
 #### ALTER SCHEMA
-- Schema renaming (`RENAME TO`)
-- Owner changes (`OWNER TO`)
+- Owner changes (`OWNER TO`) (planned)
 
 ### 🚫 Intentionally Not Supported
 
+#### CREATE SCHEMA
+- `IF NOT EXISTS` clause (pgdelta tracks existence)
+
+#### ALTER SCHEMA
+- Schema renaming (`RENAME TO`) - uses drop/recreate pattern
+
 #### Security and Ownership
-- Role-based authorization (environment-specific)
 - Schema-level privileges (security context)
 
 ## Usage Examples

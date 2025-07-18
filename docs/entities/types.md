@@ -40,8 +40,9 @@ CREATE TYPE name AS RANGE (
 ### ✅ Currently Supported
 - CREATE TYPE for composite types
 - CREATE TYPE for enum types
-- DROP TYPE
-- Basic type dependency tracking
+- CREATE DOMAIN for domain types with base type and constraints
+- DROP TYPE / DROP DOMAIN
+- Type dependency tracking
 
 ```sql
 -- Enum type
@@ -54,13 +55,16 @@ CREATE TYPE "public"."address" AS (
     state text,
     zip_code text
 );
+
+-- Domain type
+CREATE DOMAIN "public"."positive_int" AS INTEGER CHECK (VALUE > 0);
+CREATE DOMAIN "public"."email" AS TEXT CHECK (VALUE ~ '^[^@]+@[^@]+\.[^@]+$');
 ```
 
 ### ❌ Not Yet Supported
-- Domain types
+- ALTER TYPE operations (planned)
 - Range types
 - Multirange types
-- ALTER TYPE operations
 
 ### 🚫 Intentionally Not Supported
 - Base types (requires C code)
@@ -100,16 +104,19 @@ CREATE TABLE users (
 """
 ```
 
-### Domain Types (Planned)
+### Domain Types
 ```python
-# Not yet supported, but planned
 target_sql = """
 CREATE DOMAIN email AS TEXT
     CHECK (VALUE ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 
+CREATE DOMAIN positive_int AS INTEGER
+    CHECK (VALUE > 0);
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    email_address email NOT NULL
+    email_address email NOT NULL,
+    age positive_int
 );
 """
 ```
@@ -123,8 +130,13 @@ class CreateType:
     stable_id: str          # Format: "typ:schema.type_name"
     namespace: str          # Schema name
     typname: str           # Type name
-    typtype: str           # Type category (e=enum, c=composite)
-    type_definition: str   # Complete type definition
+    typtype: str           # Type category (e=enum, c=composite, d=domain)
+
+    # Type-specific fields
+    enum_values: list[str] | None = None         # For enum types
+    domain_base_type: str | None = None          # For domain types
+    domain_constraints: list[str] | None = None  # For domain types
+    composite_attributes: list[CompositeAttribute] | None = None  # For composite types
 ```
 
 ### SQL Generation
@@ -186,15 +198,6 @@ CREATE TYPE coordinate AS (
 ## Future Enhancements
 
 ### Planned Features (v0.2.0)
-
-#### Domain Types
-```sql
-CREATE DOMAIN email AS TEXT
-    CHECK (VALUE ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
-
-CREATE DOMAIN positive_integer AS INTEGER
-    CHECK (VALUE > 0);
-```
 
 #### Range Types
 ```sql

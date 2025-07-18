@@ -40,15 +40,16 @@ GROUP BY DATE_TRUNC('month', created_at);
 ```
 
 ### ❌ Not Yet Supported
-- WITH/WITHOUT DATA options
+- ALTER MATERIALIZED VIEW operations (planned)
 - Storage parameters
-- TABLESPACE clause
-- Explicit column names
 - USING method
+- Explicit column names
 
 ### 🚫 Intentionally Not Supported
+- WITH DATA option (always uses NO DATA for safety)
+- TABLESPACE clause (not applicable)
 - IF EXISTS/IF NOT EXISTS (pgdelta tracks existence)
-- REFRESH MATERIALIZED VIEW (not DDL operation)
+- REFRESH MATERIALIZED VIEW (not applicable for DDL)
 
 ## Usage Examples
 

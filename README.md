@@ -12,7 +12,7 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
 
 ##  Development Status
 
-**pgdelta is currently in early development (v0.1.0).**
+**pgdelta is currently in early development
 
 ## Feature Support Matrix
 
@@ -21,7 +21,7 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
 - ✅ **DROP SCHEMA** - Schema deletion
 - ❌ **ALTER SCHEMA** - Schema modifications (planned)
   - ❌ Owner to (planned)
-  - ✅ Rename (not applicable)
+  - 🚫 Rename (drop/replace)
 
 ### Tables
 - ✅ **CREATE TABLE** - Basic table creation
@@ -35,7 +35,7 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
   - ❌ Column COLLATE settings (not planned)
   - ❌ LIKE clause (not planned)
   - ❌ PARTITION BY clause (not planned)
-  - ❌ TABLESPACE clause (not planned)
+  - 🚫 TABLESPACE clause (not applicable)
   - ❌ TEMPORARY/UNLOGGED tables (not applicable)
 - ✅ **DROP TABLE** - Table deletion
 - ✅ **ALTER TABLE** - Table modifications (partial)
@@ -44,9 +44,9 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
   - ✅ ALTER COLUMN TYPE (with USING expression)
   - ✅ ALTER COLUMN SET/DROP DEFAULT
   - ✅ ALTER COLUMN SET/DROP NOT NULL
-  - ❌ Table/column renaming (not planned - uses drop/recreate)
-  - ❌ RENAME TO (not planned - uses drop/recreate)
-  - ❌ SET SCHEMA (not planned - uses drop/recreate)
+  - 🚫 Table/column renaming (not planned - uses drop/recreate)
+  - 🚫 RENAME TO (not planned - uses drop/recreate)
+  - 🚫 SET SCHEMA (not planned - uses drop/recreate)
 
 ### Constraints
 - ✅ **Primary Keys** - CREATE constraint
@@ -73,10 +73,10 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
   - ✅ Custom operator classes
   - ✅ ASC/DESC ordering
   - ✅ NULLS FIRST/LAST
-  - ❌ CONCURRENTLY option (not applicable)
+  - 🚫 CONCURRENTLY option (not applicable)
 - ✅ **DROP INDEX** - Index deletion
 - ❌ **ALTER INDEX** - Index modifications (planned)
-- ❌ **REINDEX** - Index rebuilding (not applicable)
+- 🚫 **REINDEX** - Index rebuilding (not applicable)
 
 ### Views
 - ✅ **CREATE VIEW** - Basic view creation
@@ -93,7 +93,7 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
 - ✅ **CREATE MATERIALIZED VIEW** - Materialized view creation
 - ✅ **DROP MATERIALIZED VIEW** - Materialized view deletion
 - ❌ **ALTER MATERIALIZED VIEW** - Materialized view modifications (planned)
-- ❌ **REFRESH MATERIALIZED VIEW** - Not applicable for DDL
+- 🚫 **REFRESH MATERIALIZED VIEW** - Not applicable for DDL
 
 ### Functions & Procedures
 - ✅ **CREATE FUNCTION** - Function creation
@@ -108,41 +108,36 @@ A PostgreSQL schema differ and DDL generator that produces high-fidelity schema 
 - ✅ **CREATE TRIGGER** - Trigger creation
 - ✅ **DROP TRIGGER** - Trigger deletion
 - ❌ **ALTER TRIGGER** - Trigger modifications (planned)
-- ❌ **ENABLE/DISABLE TRIGGER** - Not applicable for DDL
+- ❌ **ENABLE/DISABLE TRIGGER** - (planned)
 
 ### Sequences
 - ✅ **CREATE SEQUENCE** - Sequence creation
 - ✅ **DROP SEQUENCE** - Sequence deletion
 - ✅ **ALTER SEQUENCE OWNED BY** - Sequence ownership
-- ❌ **ALTER SEQUENCE** - Sequence modifications (planned)
+- ✅ **ALTER SEQUENCE** - Sequence modifications (planned)
 
 ### Types & Domains
-- ✅ **CREATE TYPE** - Custom type creation (enums, composites)
+- ✅ **CREATE TYPE** - Custom type creation (enums, composites, domains)
 - ✅ **DROP TYPE** - Type deletion
-- ❌ **CREATE DOMAIN** - Domain creation (planned)
-- ❌ **DROP DOMAIN** - Domain deletion (planned)
-- ❌ **ALTER TYPE** - Type modifications (planned)
-- ❌ **ALTER DOMAIN** - Domain modifications (planned)
+- ✅ **CREATE DOMAIN** - Domain creation with base type and constraints
+- ✅ **DROP DOMAIN** - Domain deletion
+- ✅ **ALTER TYPE** - Type modifications (planned)
 
 ### Security & Access Control
 - ✅ **Row Level Security** - RLS policies
 - ✅ **CREATE POLICY** - Policy creation
 - ✅ **DROP POLICY** - Policy deletion
 - ✅ **ALTER POLICY** - Policy modifications
-- 🚫 **CREATE ROLE** - Role creation (environment-specific)
-- 🚫 **GRANT/REVOKE** - Privilege management (environment-specific)
-- 🚫 **ALTER DEFAULT PRIVILEGES** - Default privilege management (environment-specific)
+- ❌ **CREATE ROLE** - Role creation (planned)
+- ❌ **GRANT/REVOKE** - Privilege management (planned)
+- ❌ **ALTER DEFAULT PRIVILEGES** - Default privilege management (planned)
 
 ### Other Features
-- ❌ **Comments** - Object comments (not planned)
-- ❌ **Event Triggers** - Event trigger support (not planned)
-- ❌ **Extensions** - Extension management (not planned)
 - ✅ **Dependency Resolution** - Automatic DDL ordering
-- ✅ **Roundtrip Fidelity** - Extract → Diff → Generate → Apply cycles
-
-**Note**: Extensions are not supported because they are environment-specific and require installation on the target database. pgdelta focuses on portable schema definitions that can be applied across different PostgreSQL environments.
-
-The project focuses on schema structure diffing and DDL generation with comprehensive support for PostgreSQL objects including tables, constraints, indexes, views, functions, triggers, sequences, types, and RLS policies.
+- ✅ **Roundtrip Fidelity Verification** - Extract → Diff → Generate → Apply cycles
+- ❌ **Comments** - Object comments (planned)
+- ❌ **Event Triggers** - Event trigger support (planned)
+- ❌ **Extensions** - Extension management (planned)
 
 ## Architecture
 
@@ -328,32 +323,6 @@ Uses dataclass field metadata to categorize fields with wrapper functions:
 - `internal()`: Fields needed for dependency resolution (ignored in semantic comparison)
 
 The wrapper functions generate the appropriate metadata dictionaries, making field categorization cleaner and more maintainable.
-
-## Roadmap
-
-### Phase 1 (Current - v0.1.x)
-- ✅ Comprehensive schema and table DDL generation
-- ✅ All constraint types (primary keys, foreign keys, unique, check, exclusion)
-- ✅ Complete index support (all types, partial, functional)
-- ✅ Views and materialized views
-- ✅ Functions and triggers
-- ✅ Sequences with ownership tracking
-- ✅ Custom types (enums, composites)
-- ✅ RLS policies
-- ✅ Advanced dependency resolution
-- ✅ Roundtrip fidelity
-- ✅ CLI interface
-
-### Phase 2 (v0.2.x)
-- 🔄 ALTER operations for constraints and indexes
-- 🔄 Domain types
-- 🔄 Enhanced materialized view support
-- 🔄 Advanced function features
-
-### Phase 3 (v0.3.x)
-- 🔄 Partitioning support
-- 🔄 Performance optimizations
-- 🔄 Streaming processing for large schemas
 
 ## License
 

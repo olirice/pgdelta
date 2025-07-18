@@ -35,9 +35,10 @@ WHERE is_active = true;
 ```
 
 ### ❌ Not Yet Supported
-- RECURSIVE views
-- Explicit column names
-- WITH CHECK OPTION
+- ALTER VIEW operations (planned)
+- RECURSIVE views (planned)
+- Explicit column names (planned)
+- WITH CHECK OPTION (planned)
 - View options (security_barrier, check_option)
 
 ### 🚫 Intentionally Not Supported

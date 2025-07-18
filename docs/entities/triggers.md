@@ -20,12 +20,16 @@ CREATE [ OR REPLACE ] [ CONSTRAINT ] TRIGGER name { BEFORE | AFTER | INSTEAD OF 
 
 ## pgdelta Support
 
-### ✅ Currently Supported
+### ✅ Currently Supported (via pg_get_triggerdef)
 - CREATE TRIGGER with complete definition
 - DROP TRIGGER
 - All trigger types (BEFORE, AFTER, INSTEAD OF)
 - All trigger events (INSERT, UPDATE, DELETE, TRUNCATE)
 - Row-level and statement-level triggers
+- CONSTRAINT triggers
+- Transition tables (REFERENCING clause)
+- WHEN conditions
+- All trigger features
 
 ```sql
 CREATE TRIGGER "update_user_modified_time"
@@ -35,12 +39,8 @@ EXECUTE FUNCTION update_modified_time();
 ```
 
 ### ❌ Not Yet Supported
-- CONSTRAINT triggers
-- Transition tables (REFERENCING clause)
-- Complex trigger dependency optimization
-
-### 🚫 Intentionally Not Supported
-- ENABLE/DISABLE TRIGGER (runtime operation)
+- ALTER TRIGGER operations (planned)
+- ENABLE/DISABLE TRIGGER (planned)
 
 ## Usage Examples
 

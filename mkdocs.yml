@@ -35,7 +35,6 @@ nav:
   - API Reference:
     - CLI Interface: api/cli.md
     - Python API: api/python.md
-    - Planned API: api/planned.md
   - Supported Entities:
     - Overview: entities/overview.md
     - Schemas: entities/schemas.md

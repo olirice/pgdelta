@@ -95,7 +95,7 @@ pgdelta uses a **three-phase approach** designed for correctness and testability
 
 ## What's Supported
 
-### Currently Supported (v0.1.0)
+### Currently Supported
 - ✅ **Schemas**: CREATE/DROP operations
 - ✅ **Tables**: CREATE/DROP/ALTER operations with full column support
 - ✅ **Constraints**: Primary keys, unique, foreign keys, check, exclusion constraints
@@ -103,25 +103,22 @@ pgdelta uses a **three-phase approach** designed for correctness and testability
 - ✅ **Views**: CREATE/DROP/REPLACE operations
 - ✅ **Materialized Views**: CREATE/DROP operations
 - ✅ **Functions & Procedures**: Full lifecycle management including CREATE OR REPLACE
-- ✅ **Triggers**: Trigger lifecycle management
-- ✅ **Sequences**: Sequence operations with ownership tracking
-- ✅ **Custom Types**: Enum and composite type support
-- ✅ **RLS Policies**: Row Level Security policy management
+- ✅ **Triggers**: CREATE/DROP operations
+- ✅ **Sequences**: CREATE/DROP operations with ownership tracking, ALTER SEQUENCE OWNED BY
+- ✅ **Types**: Enum, composite, and domain type support (CREATE/DROP)
+- ✅ **RLS Policies**: CREATE/DROP/ALTER policy management
 - ✅ **Dependency Resolution**: Constraint-based dependency ordering
+- ✅ **Roundtrip Fidelity**: Extract → Diff → Generate → Apply verification
 
 ### Planned Features
-- 🔄 **ALTER operations**: Enhanced alter support for constraints and indexes
-- 🔄 **Domain types**: Domain type support
+- 🔄 **ALTER operations**: ALTER SEQUENCE, ALTER TYPE, ALTER FUNCTION/PROCEDURE, ALTER TRIGGER
+- 🔄 **Schema modifications**: ALTER SCHEMA operations
+- 🔄 **View enhancements**: RECURSIVE views, explicit column names, WITH CHECK OPTION
+- 🔄 **Trigger management**: ENABLE/DISABLE TRIGGER
+- 🔄 **Security features**: CREATE ROLE, GRANT/REVOKE, ALTER DEFAULT PRIVILEGES
+- 🔄 **Metadata**: Comments on objects
+- 🔄 **Advanced features**: Event triggers, Extensions
 - 🔄 **Partitioning**: Table partitioning support
-- 🔄 **Performance optimizations**: Streaming processing for large schemas
-
-## Why pgdelta?
-
-- **Correctness First**: Real PostgreSQL testing ensures accuracy
-- **Dependency Aware**: Automatically handles complex object relationships
-- **Type Safe**: Complete type safety with mypy
-- **Extensible**: Clean architecture for adding new entity types
-- **Portable**: Focuses on schema definitions that work across PostgreSQL environments
 
 ## Next Steps
 
