@@ -492,29 +492,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/planned/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Planned API
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -845,9 +822,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#currently-supported" class="md-nav__link">
+  <a href="#currently-supported-via-pg_get_triggerdef" class="md-nav__link">
     <span class="md-ellipsis">
-      ✅ Currently Supported
+      ✅ Currently Supported (via pg_get_triggerdef)
     </span>
   </a>
   
@@ -857,15 +834,6 @@
   <a href="#not-yet-supported" class="md-nav__link">
     <span class="md-ellipsis">
       ❌ Not Yet Supported
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#intentionally-not-supported" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚫 Intentionally Not Supported
     </span>
   </a>
   
@@ -1327,9 +1295,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#currently-supported" class="md-nav__link">
+  <a href="#currently-supported-via-pg_get_triggerdef" class="md-nav__link">
     <span class="md-ellipsis">
-      ✅ Currently Supported
+      ✅ Currently Supported (via pg_get_triggerdef)
     </span>
   </a>
   
@@ -1339,15 +1307,6 @@
   <a href="#not-yet-supported" class="md-nav__link">
     <span class="md-ellipsis">
       ❌ Not Yet Supported
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#intentionally-not-supported" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚫 Intentionally Not Supported
     </span>
   </a>
   
@@ -1557,28 +1516,27 @@
 </span></code></pre></div>
 <p><strong>Reference</strong>: <a href="https://www.postgresql.org/docs/17/sql-createtrigger.html">PostgreSQL 17 CREATE TRIGGER</a></p>
 <h2 id="pgdelta-support">pgdelta Support<a class="headerlink" href="#pgdelta-support" title="Permanent link">&para;</a></h2>
-<h3 id="currently-supported">✅ Currently Supported<a class="headerlink" href="#currently-supported" title="Permanent link">&para;</a></h3>
+<h3 id="currently-supported-via-pg_get_triggerdef">✅ Currently Supported (via pg_get_triggerdef)<a class="headerlink" href="#currently-supported-via-pg_get_triggerdef" title="Permanent link">&para;</a></h3>
 <ul>
 <li>CREATE TRIGGER with complete definition</li>
 <li>DROP TRIGGER</li>
 <li>All trigger types (BEFORE, AFTER, INSTEAD OF)</li>
 <li>All trigger events (INSERT, UPDATE, DELETE, TRUNCATE)</li>
 <li>Row-level and statement-level triggers</li>
+<li>CONSTRAINT triggers</li>
+<li>Transition tables (REFERENCING clause)</li>
+<li>WHEN conditions</li>
+<li>All trigger features</li>
 </ul>
-<div class="language-sql highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TRIGGER</span><span class="w"> </span><span class="ss">&quot;update_user_modified_time&quot;</span><span class="w"> </span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">BEFORE</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="ss">&quot;public&quot;</span><span class="p">.</span><span class="ss">&quot;users&quot;</span><span class="w"> </span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">FOR</span><span class="w"> </span><span class="k">EACH</span><span class="w"> </span><span class="k">ROW</span><span class="w"> </span>
+<div class="language-sql highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">TRIGGER</span><span class="w"> </span><span class="ss">&quot;update_user_modified_time&quot;</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">BEFORE</span><span class="w"> </span><span class="k">UPDATE</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="ss">&quot;public&quot;</span><span class="p">.</span><span class="ss">&quot;users&quot;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">FOR</span><span class="w"> </span><span class="k">EACH</span><span class="w"> </span><span class="k">ROW</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">EXECUTE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">update_modified_time</span><span class="p">();</span>
 </span></code></pre></div>
 <h3 id="not-yet-supported">❌ Not Yet Supported<a class="headerlink" href="#not-yet-supported" title="Permanent link">&para;</a></h3>
 <ul>
-<li>CONSTRAINT triggers</li>
-<li>Transition tables (REFERENCING clause)</li>
-<li>Complex trigger dependency optimization</li>
-</ul>
-<h3 id="intentionally-not-supported">🚫 Intentionally Not Supported<a class="headerlink" href="#intentionally-not-supported" title="Permanent link">&para;</a></h3>
-<ul>
-<li>ENABLE/DISABLE TRIGGER (runtime operation)</li>
+<li>ALTER TRIGGER operations (planned)</li>
+<li>ENABLE/DISABLE TRIGGER (planned)</li>
 </ul>
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="basic-update-trigger">Basic Update Trigger<a class="headerlink" href="#basic-update-trigger" title="Permanent link">&para;</a></h3>

@@ -492,29 +492,6 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../api/planned/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Planned API
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
@@ -822,9 +799,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#currently-supported" class="md-nav__link">
+  <a href="#currently-supported-via-pg_get_functiondef" class="md-nav__link">
     <span class="md-ellipsis">
-      ✅ Currently Supported
+      ✅ Currently Supported (via pg_get_functiondef)
     </span>
   </a>
   
@@ -834,15 +811,6 @@
   <a href="#not-yet-supported" class="md-nav__link">
     <span class="md-ellipsis">
       ❌ Not Yet Supported
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#intentionally-not-supported" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚫 Intentionally Not Supported
     </span>
   </a>
   
@@ -1336,9 +1304,9 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#currently-supported" class="md-nav__link">
+  <a href="#currently-supported-via-pg_get_functiondef" class="md-nav__link">
     <span class="md-ellipsis">
-      ✅ Currently Supported
+      ✅ Currently Supported (via pg_get_functiondef)
     </span>
   </a>
   
@@ -1348,15 +1316,6 @@
   <a href="#not-yet-supported" class="md-nav__link">
     <span class="md-ellipsis">
       ❌ Not Yet Supported
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#intentionally-not-supported" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚫 Intentionally Not Supported
     </span>
   </a>
   
@@ -1587,14 +1546,21 @@
 </span></code></pre></div>
 <p><strong>Reference</strong>: <a href="https://www.postgresql.org/docs/17/sql-createfunction.html">PostgreSQL 17 CREATE FUNCTION</a></p>
 <h2 id="pgdelta-support">pgdelta Support<a class="headerlink" href="#pgdelta-support" title="Permanent link">&para;</a></h2>
-<h3 id="currently-supported">✅ Currently Supported<a class="headerlink" href="#currently-supported" title="Permanent link">&para;</a></h3>
+<h3 id="currently-supported-via-pg_get_functiondef">✅ Currently Supported (via pg_get_functiondef)<a class="headerlink" href="#currently-supported-via-pg_get_functiondef" title="Permanent link">&para;</a></h3>
 <ul>
 <li>CREATE FUNCTION with complete definition</li>
 <li>DROP FUNCTION</li>
 <li>CREATE OR REPLACE FUNCTION</li>
+<li>CREATE PROCEDURE</li>
+<li>DROP PROCEDURE</li>
 <li>All function languages (SQL, PL/pgSQL, Python, etc.)</li>
-<li>Function parameters and return types</li>
-<li>Function attributes (IMMUTABLE, STABLE, VOLATILE, etc.)</li>
+<li>All parameter modes (IN, OUT, INOUT, VARIADIC)</li>
+<li>All return types including RETURNS TABLE</li>
+<li>All function attributes (IMMUTABLE, STABLE, VOLATILE, etc.)</li>
+<li>Security context (SECURITY DEFINER/INVOKER)</li>
+<li>Cost and row estimates</li>
+<li>Configuration parameter settings</li>
+<li>All PostgreSQL function features</li>
 </ul>
 <div class="language-sql highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="ss">&quot;public&quot;</span><span class="p">.</span><span class="ss">&quot;calculate_tax&quot;</span><span class="p">(</span><span class="n">amount</span><span class="w"> </span><span class="nb">decimal</span><span class="p">,</span><span class="w"> </span><span class="n">rate</span><span class="w"> </span><span class="nb">decimal</span><span class="p">)</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">RETURNS</span><span class="w"> </span><span class="nb">decimal</span>
@@ -1606,12 +1572,8 @@
 </span></code></pre></div>
 <h3 id="not-yet-supported">❌ Not Yet Supported<a class="headerlink" href="#not-yet-supported" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Function overloading resolution improvements</li>
-<li>Complex function dependency tracking</li>
-</ul>
-<h3 id="intentionally-not-supported">🚫 Intentionally Not Supported<a class="headerlink" href="#intentionally-not-supported" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Runtime function execution (not DDL)</li>
+<li>ALTER FUNCTION operations (planned)</li>
+<li>ALTER PROCEDURE operations (planned)</li>
 </ul>
 <h2 id="usage-examples">Usage Examples<a class="headerlink" href="#usage-examples" title="Permanent link">&para;</a></h2>
 <h3 id="basic-sql-function">Basic SQL Function<a class="headerlink" href="#basic-sql-function" title="Permanent link">&para;</a></h3>
@@ -1635,8 +1597,8 @@
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s2">DECLARE</span>
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s2">    order_count integer;</span>
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s2">BEGIN</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s2">    SELECT COUNT(*) INTO order_count </span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s2">    FROM orders </span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="s2">    SELECT COUNT(*) INTO order_count</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="s2">    FROM orders</span>
 </span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="s2">    WHERE orders.user_id = $1;</span>
 </span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
 </span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="s2">    RETURN order_count;</span>
@@ -1651,8 +1613,8 @@
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s2">LANGUAGE sql</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s2">STABLE</span>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s2">AS $$</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s2">    SELECT id, user_id, total </span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s2">    FROM orders </span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s2">    SELECT id, user_id, total</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s2">    FROM orders</span>
 </span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s2">    WHERE created_at &gt;= CURRENT_DATE - INTERVAL &#39;1 day&#39; * days_back;</span>
 </span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s2">$$;</span>
 </span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s2">&quot;&quot;&quot;</span>
