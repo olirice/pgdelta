@@ -1,0 +1,188 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pgdelta"
+dynamic = ["version"]
+description = "PostgreSQL schema differ and DDL generator"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "Apache-2.0"}
+authors = [
+    { name = "Oliver Rice" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "sqlalchemy>=2.0",
+    "psycopg2-binary>=2.9",
+    "networkx>=3.0",
+    "typer>=0.12.0",
+    "rich>=13.0",
+    "psutil>=5.9.0",
+    "flupy>=1.2.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.0",
+    "mypy>=1.0",
+    "ruff>=0.1",
+    "pre-commit>=3.0",
+    "docker>=6.0",
+    "pytest-postgresql>=4.0",
+    "testcontainers>=3.0",
+    "pytest-xdist>=3.0",
+    "types-psutil>=5.9.0",
+]
+
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.24.0",
+    "pymdown-extensions>=10.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/olirice/pgdelta"
+Repository = "https://github.com/olirice/pgdelta.git"
+Issues = "https://github.com/olirice/pgdelta/issues"
+
+[project.scripts]
+pgdelta = "pgdelta.cli.main:app"
+
+[tool.hatch.version]
+path = "src/pgdelta/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pgdelta"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "N",  # pep8-naming
+    "UP", # pyupgrade
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "SIM", # flake8-simplify
+    "RUF", # ruff-specific rules
+    "TID", # flake8-tidy-imports
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+    "TID252", # prefer absolute imports - too strict for internal package structure
+    "RUF009", # do not perform function calls in dataclass defaults (our field wrappers are intentional)
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+# No banned APIs currently
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # assert statements are OK in tests
+"src/pgdelta/model/pg_constraint.py" = ["RUF009"]  # field wrapper functions are intentional
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+strict_concatenate = true
+
+[[tool.mypy.overrides]]
+module = [
+    "networkx.*",
+    "psycopg2.*",
+    "pytest_postgresql.*",
+    "testcontainers.*",
+    "typer.*",
+    "psutil.*",
+    "flupy.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "pgdelta.cli.*"
+disallow_untyped_decorators = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=src/pgdelta",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=85",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+    "-m not cli",  # Skip CLI tests by default
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "roundtrip: marks tests as roundtrip fidelity tests",
+    "cli: marks tests as CLI tests",
+    "slow_integration: marks tests as slow integration tests",
+    "realistic: marks tests that use real PostgreSQL containers instead of mocks",
+]
+
+[tool.coverage.run]
+source = ["src/pgdelta"]
+omit = [
+    "*/tests/*",
+    "*/conftest.py",
+    "*/legacy/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "assert_never",
+    "if TYPE_CHECKING:",
+    "pass",
+]
